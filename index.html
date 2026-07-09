@@ -4,17 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fascicolo Ente — Studio Grismondi srl</title>
+<script src="https://alcdn.msauth.net/browser/2.32.2/js/msal-browser.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--primary:#1a56db;--primary-light:#e8effc;--primary-dark:#1042a3;--accent:#7c3aed;--accent-light:#ede9fe;--success:#059669;--success-light:#d1fae5;--warning:#d97706;--warning-light:#fef3c7;--danger:#dc2626;--danger-light:#fee2e2;--info:#0891b2;--info-light:#cffafe;--gc:#ea580c;--gc-light:#fff7ed;--bg:#f0f2f5;--surface:#fff;--border:#e2e5ea;--border-light:#f0f2f5;--text:#1a1d23;--text-secondary:#5f6577;--text-muted:#9ca0ad;--nav-bg:#0f172a;--shadow-sm:0 1px 2px rgba(0,0,0,0.06);--shadow:0 2px 8px rgba(0,0,0,0.08);--shadow-lg:0 8px 24px rgba(0,0,0,0.12);--radius:10px;--radius-sm:6px;--radius-lg:14px;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+/* LOGIN */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%);padding:20px;}
+.login-card{background:white;border-radius:var(--radius-lg);padding:36px 30px;width:100%;max-width:380px;box-shadow:var(--shadow-lg);text-align:center;}
+.login-card .li-icon{width:56px;height:56px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:white;margin:0 auto 14px;}
+.login-card h1{font-family:'Space Grotesk',sans-serif;font-size:20px;margin-bottom:4px;}
+.login-card .li-sub{color:var(--text-secondary);font-size:12px;margin-bottom:24px;}
+.login-btn{background:var(--primary);color:white;border:none;padding:14px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.login-btn:hover{background:var(--primary-dark);}
+.login-note{font-size:10px;color:var(--text-muted);margin-top:14px;}
+.denied-box{background:var(--warning-light);border:1px solid var(--warning);border-radius:10px;padding:14px;font-size:12px;color:#92400e;margin-top:14px;display:none;}
+/* NAV */
 .top-nav{background:var(--nav-bg);padding:0 16px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.2);gap:10px;}
 .brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;color:white;flex-shrink:0;}
 .brand-text{font-family:'Space Grotesk',sans-serif;color:white;font-size:15px;font-weight:700;letter-spacing:-0.3px;}
 .brand-sub{color:rgba(255,255,255,0.5);font-size:10px;}
 .nav-tab-active{color:white;background:var(--primary);padding:0 14px;height:100%;display:flex;align-items:center;font-size:12px;font-weight:600;gap:5px;margin-left:8px;}
 .beta-pill{background:var(--warning);color:white;font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px;letter-spacing:0.5px;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.nav-user{color:rgba(255,255,255,0.7);font-size:11px;text-align:right;}
+.nav-btn{background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.3);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.nav-btn:hover{background:rgba(255,255,255,0.25);}
 .main-content{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto;}
 .search-panel{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;margin-bottom:16px;}
 .section-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:4px;}
@@ -24,18 +40,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .field label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;}
 .field select,.field input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:white;color:var(--text);}
 .field select:focus,.field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,86,219,0.1);}
-.kpi-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.kpi-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
-.kpi{background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow-sm);border-left:3px solid var(--primary);cursor:pointer;transition:all 0.15s;border-top:1px solid transparent;border-right:1px solid transparent;border-bottom:1px solid transparent;}
+.kpi{background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow-sm);border-left:3px solid var(--primary);cursor:pointer;transition:all 0.15s;}
 .kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
 .kpi.active{outline:2px solid var(--primary);outline-offset:-1px;background:var(--primary-light);}
 .kpi .v{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:var(--primary);}
 .kpi .l{font-size:10px;color:var(--text-secondary);margin-top:2px;}
+.kpi .hint-click{font-size:8px;color:var(--text-muted);margin-top:4px;}
 .kpi.green{border-left-color:var(--success);}.kpi.green .v{color:var(--success);}
 .kpi.orange{border-left-color:var(--warning);}.kpi.orange .v{color:var(--warning);}.kpi.orange.active{outline-color:var(--warning);background:var(--warning-light);}
 .kpi.purple{border-left-color:var(--accent);}.kpi.purple .v{color:var(--accent);}.kpi.purple.active{outline-color:var(--accent);background:var(--accent-light);}
 .kpi.gc{border-left-color:var(--gc);}.kpi.gc .v{color:var(--gc);}.kpi.gc.active{outline-color:var(--gc);background:var(--gc-light);}
-.kpi .hint-click{font-size:8px;color:var(--text-muted);margin-top:4px;}
 .filter-banner{background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 .filter-banner .fb-text{font-size:12px;font-weight:700;color:var(--primary);}
 .filter-banner.gc-style{background:var(--gc-light);border-color:var(--gc);}
@@ -53,6 +69,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn:hover{background:var(--bg);}
 .btn-primary{background:var(--primary);color:white;border-color:var(--primary);}
 .btn-primary:hover{background:var(--primary-dark);}
+.loading{text-align:center;padding:50px;color:var(--text-secondary);}
+.spinner{border:4px solid #e5e7eb;border-top:4px solid var(--primary);border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:10px;font-size:13px;font-weight:600;z-index:500;box-shadow:var(--shadow-lg);display:none;}
+.toast.ok{background:var(--success-light);color:var(--success);border:1px solid var(--success);}
+.toast.err{background:var(--danger-light);color:var(--danger);border:1px solid var(--danger);}
 /* Card view */
 .atto-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;}
 .atto-head{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-left:4px solid var(--primary);transition:background 0.15s;}
@@ -87,7 +109,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .action-row{display:flex;gap:6px;margin-top:12px;justify-content:flex-end;}
 .act-edit{background:var(--primary-light);color:var(--primary);border:none;padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .act-del{background:var(--danger-light);color:var(--danger);border:none;padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
-/* Compact view */
+/* Compact */
 .compact-wrap{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .compact-table{width:100%;border-collapse:collapse;min-width:760px;}
 .compact-table thead th{background:var(--nav-bg);color:rgba(255,255,255,0.85);padding:9px 10px;font-size:10px;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;}
@@ -142,10 +164,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .form-row{grid-template-columns:1fr;}
 .kpi-grid{grid-template-columns:1fr 1fr;}
 .brand-sub{display:none;}
+.nav-user{display:none;}
 }
 </style>
 </head>
 <body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="li-icon">🏛️</div>
+    <h1>Fascicolo Ente</h1>
+    <div class="li-sub">Studio Grismondi srl — Modulo BETA (solo Amministratori)</div>
+    <button class="login-btn" id="loginBtn">🔐 Accedi con Microsoft</button>
+    <div class="denied-box" id="deniedBox">⚠️ <strong>Accesso riservato.</strong><br>Questo modulo è in fase di test ed è accessibile solo agli amministratori dello studio.</div>
+    <div class="login-note">Stesso account Microsoft dello Scadenziario</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen" style="display:none;flex:1;display:none;flex-direction:column;min-height:100vh;">
 <nav class="top-nav">
   <div class="brand-icon">☁️</div>
   <div>
@@ -153,12 +191,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
   <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span></div>
+  <div class="nav-right">
+    <div class="nav-user" id="navUser"></div>
+    <button class="nav-btn" id="btnSync">🔄 Sync</button>
+    <button class="nav-btn" id="btnLogout">Esci</button>
+  </div>
 </nav>
 
 <div class="main-content">
   <div class="search-panel">
     <h2 class="section-title">🏛️ Fascicolo Ente</h2>
-    <div class="section-sub">Registro delibere CC/GC e pareri organo di revisione per ente e anno</div>
+    <div class="section-sub">Registro delibere CC/GC e pareri organo di revisione — dati su SharePoint</div>
     <div class="search-row">
       <div class="field" style="min-width:260px;flex:2">
         <label>Ente</label>
@@ -177,13 +220,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </div>
 
+  <div id="loadingBox" class="loading" style="display:none;"><div class="spinner"></div><p>Caricamento dati da SharePoint...</p></div>
   <div id="kpiArea"></div>
   <div id="filterBannerArea"></div>
   <div id="toolbarArea"></div>
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Modulo Fascicolo Ente (BETA sperimentale — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente (BETA — solo Amministratori)</footer>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <!-- MODAL -->
 <div class="modal-overlay" id="mo" onclick="if(event.target===this)closeModal()">
@@ -202,7 +249,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <label>Oggetto</label>
         <input type="text" id="f-oggetto" placeholder="es: Approvazione Bilancio di Previsione 2026-2028">
       </div>
-
       <label class="gc-toggle">
         <input type="checkbox" id="f-isGC" onchange="toggleGC()">
         <div>
@@ -210,14 +256,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div class="gc-sub">Da ratificare in Consiglio entro 60 giorni — art. 175 c.4 TUEL</div>
         </div>
       </label>
-
       <div class="separator"><span class="sep-label" id="sepDelLabel">📜 Delibera Consiglio Comunale</span></div>
       <div class="form-row">
         <div class="form-group"><label id="delNLabel">N° Delibera</label><input type="text" id="f-delN" placeholder="es: 42"></div>
         <div class="form-group"><label>Data Delibera</label><input type="date" id="f-delData"></div>
       </div>
       <div class="hint">💡 Lascia vuoto se l'atto non è ancora stato approvato — potrai completarlo dopo</div>
-
       <div class="gc-fields" id="gcFields">
         <div style="font-size:11px;font-weight:700;color:var(--gc);margin-bottom:10px">⚖️ Ratifica del Consiglio Comunale (entro 60 gg dalla delibera GC)</div>
         <div class="form-row">
@@ -225,7 +269,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div class="form-group" style="margin-bottom:0"><label>Data Ratifica</label><input type="date" id="f-ratData"></div>
         </div>
       </div>
-
       <div class="separator"><span class="sep-label">📝 Parere Organo di Revisione</span></div>
       <div class="form-row">
         <div class="form-group"><label>N° Verbale</label><input type="text" id="f-verbN" placeholder="es: 12"></div>
@@ -242,33 +285,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
     <div class="form-actions">
       <button class="btn" onclick="closeModal()">Annulla</button>
-      <button class="btn btn-primary" onclick="saveAtto()">💾 Salva Atto</button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveAtto()">💾 Salva Atto</button>
     </div>
   </div>
 </div>
 
 <script>
 // ============================================================
-// FASCICOLO ENTE — BETA sperimentale (solo Admin)
-// KPI GLOBALI cliccabili su tutti gli enti
-// In FASE 4: dati da SharePoint HUB_FascicoloEnte
-// Colonne: Ente, Anno, Categoria, Oggetto, OrganoGC (Sì/No),
-//          DeliberaN, DeliberaData, RatificaN, RatificaData,
-//          VerbaleN, VerbaleData, EsitoRevisore, Note
+// FASCICOLO ENTE v1.0 PRODUZIONE
+// MSAL + SharePoint (HUB_FascicoloEnte) + Enti da Scadenziario_Comuni
+// Accesso: SOLO ADMIN_EMAILS (fase beta)
 // ============================================================
 
-const ENTI = [
-  {id:1, nome:'Comune di Tavernola Bergamasca', prov:'BG'},
-  {id:2, nome:'Comune di Castro', prov:'BG'},
-  {id:3, nome:'Comune di Solto Collina', prov:'BG'},
-  {id:4, nome:'Comune di Vigolo', prov:'BG'},
-  {id:5, nome:'Comune di Predore', prov:'BG'},
-  {id:6, nome:'Comune di Riva di Solto', prov:'BG'},
-  {id:7, nome:'Comune di Sarnico', prov:'BG'},
-  {id:8, nome:'Comune di Lovere', prov:'BG'}
-];
+const msalConfig = {
+  auth: {
+    clientId: '931c14fe-e538-4ae3-a336-0d3a9fd75c49',
+    authority: 'https://login.microsoftonline.com/7f07be7a-b1c7-42ca-8f8b-ff793e29b450',
+    redirectUri: window.location.origin + window.location.pathname
+  },
+  cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: true }
+};
+const loginRequest = { scopes: ['User.Read','Sites.Read.All','Sites.ReadWrite.All'] };
+const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-const ANNI = ['2026','2025','2024','2023'];
+const SHAREPOINT_HOSTNAME = 'studiogrismondi.sharepoint.com';
+const SITE_PATH = '/';
+const LIST_FASCICOLO = 'HUB_FascicoloEnte';
+const LIST_COMUNI = 'Scadenziario_Comuni';
+
+const ADMIN_EMAILS = ['info@studiogrismondisrl.it', 'roberta@studiogrismondisrl.it'];
+
+let currentUser = null, accessToken = null, siteId = null;
+let ENTI = [];   // da Scadenziario_Comuni: {id(nome), nome, prov}
+let ATTI = [];   // da HUB_FascicoloEnte
 
 const CATEGORIE = {
   bilancio:{label:'Bilancio di Previsione',icon:'📊',color:'#1a56db'},
@@ -283,40 +332,20 @@ const CATEGORIE = {
   piano_performance:{label:'Piano Performance',icon:'🎯',color:'#e11d48'},
   altro:{label:'Altro atto',icon:'📎',color:'#64748b'}
 };
-
 const ESITI = {
   favorevole:{label:'Favorevole',cls:'fav',icon:'✅'},
   favorevole_con_rilievi:{label:'Fav. con rilievi',cls:'rilievi',icon:'⚠️'},
   negativo:{label:'Negativo',cls:'neg',icon:'❌'}
 };
 
-// DATI DEMO
-let ATTI = [
-  {id:1,enteId:1,anno:'2025',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2025-2027',isGC:false,delN:'42',delData:'2024-12-20',ratN:'',ratData:'',verbN:'12',verbData:'2024-12-18',esito:'favorevole',note:'Approvato con emendamento su Missione 1'},
-  {id:2,enteId:1,anno:'2025',cat:'rendiconto',oggetto:'Approvazione Rendiconto di Gestione 2024',isGC:false,delN:'18',delData:'2025-04-28',ratN:'',ratData:'',verbN:'5',verbData:'2025-04-25',esito:'favorevole',note:''},
-  {id:3,enteId:1,anno:'2025',cat:'salvaguardia',oggetto:'Salvaguardia equilibri di bilancio 2025',isGC:false,delN:'28',delData:'2025-07-29',ratN:'',ratData:'',verbN:'8',verbData:'2025-07-27',esito:'favorevole',note:''},
-  {id:4,enteId:1,anno:'2025',cat:'variazioni',oggetto:'Variazione urgente GC n.2/2025 — utilizzo avanzo',isGC:true,delN:'55',delData:'2025-09-10',ratN:'38',ratData:'2025-10-20',verbN:'9',verbData:'2025-09-08',esito:'favorevole',note:'Ratificata nei termini'},
-  {id:5,enteId:1,anno:'2025',cat:'tari',oggetto:'Approvazione tariffe TARI 2025',isGC:false,delN:'15',delData:'2025-04-28',ratN:'',ratData:'',verbN:'4',verbData:'2025-04-26',esito:'favorevole',note:'Aumento +2,3% rispetto 2024'},
-  {id:6,enteId:1,anno:'2026',cat:'bilancio',oggetto:'Bilancio di Previsione 2026-2028',isGC:false,delN:'',delData:'',ratN:'',ratData:'',verbN:'',verbData:'',esito:'',note:'Da approvare entro termini di legge'},
-  {id:7,enteId:1,anno:'2026',cat:'variazioni',oggetto:'Variazione urgente GC n.1/2026 — somma urgenza viabilità',isGC:true,delN:'12',delData:'2026-04-05',ratN:'',ratData:'',verbN:'3',verbData:'2026-04-03',esito:'favorevole',note:'RATIFICA CC DA CALENDARIZZARE'},
-  {id:8,enteId:2,anno:'2025',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2025-2027',isGC:false,delN:'38',delData:'2024-12-19',ratN:'',ratData:'',verbN:'10',verbData:'2024-12-17',esito:'favorevole',note:''},
-  {id:9,enteId:2,anno:'2025',cat:'rendiconto',oggetto:'Approvazione Rendiconto di Gestione 2024',isGC:false,delN:'22',delData:'2025-04-29',ratN:'',ratData:'',verbN:'6',verbData:'2025-04-27',esito:'favorevole_con_rilievi',note:'Rilievo su residui attivi vetusti'},
-  {id:10,enteId:2,anno:'2026',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2026-2028',isGC:false,delN:'5',delData:'2026-02-25',ratN:'',ratData:'',verbN:'2',verbData:'2026-02-23',esito:'favorevole',note:'Approvato nei termini'},
-  {id:11,enteId:2,anno:'2026',cat:'variazioni',oggetto:'Variazione urgente GC n.3/2026 — contributo regionale',isGC:true,delN:'22',delData:'2026-03-15',ratN:'',ratData:'',verbN:'4',verbData:'2026-03-13',esito:'favorevole',note:''},
-  {id:12,enteId:3,anno:'2025',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2025-2027',isGC:false,delN:'35',delData:'2024-12-21',ratN:'',ratData:'',verbN:'9',verbData:'2024-12-19',esito:'favorevole',note:''},
-  {id:13,enteId:3,anno:'2026',cat:'rendiconto',oggetto:'Rendiconto di Gestione 2025',isGC:false,delN:'',delData:'',ratN:'',ratData:'',verbN:'',verbData:'',esito:'',note:'In preparazione'}
-];
-let nextId = 100;
-let editId = null;
-let selectedEsito = '';
-let viewMode = 'compact';
-let kpiFilter = null; // null | 'tutti' | 'rilievi' | 'attesa' | 'ratifiche'
+let editId = null, selectedEsito = '', viewMode = 'compact', kpiFilter = null;
 
 const fmtDate = d => { if(!d) return '—'; const p = d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const enteName = id => { const e = ENTI.find(x => x.id === id); return e ? e.nome.replace('Comune di ','') : '?'; };
+const enteShort = n => String(n||'').replace('Comune di ','');
+const toDateOnly = v => { if(!v) return ''; return String(v).split('T')[0]; };
+const toast = (msg, ok=true) => { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + (ok?'ok':'err'); t.style.display = 'block'; setTimeout(()=>{ t.style.display='none'; }, 3500); };
 
-// Giorni rimanenti per ratifica GC (60 gg — art. 175 c.4 TUEL)
 function giorniRatifica(a){
   if(!a.isGC || !a.delData || a.ratN) return null;
   const del = new Date(a.delData+'T00:00:00');
@@ -325,16 +354,158 @@ function giorniRatifica(a){
   return Math.ceil((scad - oggi)/(1000*60*60*24));
 }
 
-function init(){
+// ============================================================
+// AUTH
+// ============================================================
+async function login(){
+  try{
+    await msalInstance.initialize();
+    const resp = await msalInstance.loginPopup(loginRequest);
+    currentUser = resp.account;
+    await handleAuth();
+  }catch(err){ console.error(err); alert('Errore login: '+err.message); }
+}
+
+async function handleAuth(){
+  try{
+    const account = msalInstance.getAllAccounts()[0];
+    if(!account) return;
+    currentUser = account;
+    const tokenResp = await msalInstance.acquireTokenSilent({ ...loginRequest, account: currentUser });
+    accessToken = tokenResp.accessToken;
+
+    // CONTROLLO ADMIN — beta riservata
+    const isAdmin = ADMIN_EMAILS.some(e => e.toLowerCase() === currentUser.username.toLowerCase());
+    if(!isAdmin){
+      document.getElementById('deniedBox').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('loginScreen').style.display = 'none';
+    const app = document.getElementById('appScreen');
+    app.style.display = 'flex';
+    document.getElementById('navUser').innerHTML = '👑 ' + esc(currentUser.name || currentUser.username);
+
+    await loadData();
+  }catch(err){
+    if(err.name === 'InteractionRequiredAuthError') await login();
+    else { console.error(err); toast('Errore autenticazione: '+err.message, false); }
+  }
+}
+
+async function logout(){
+  try{ await msalInstance.logoutPopup(); }catch(e){}
+  location.reload();
+}
+
+// ============================================================
+// GRAPH API
+// ============================================================
+async function callGraph(endpoint, method='GET', body=null){
+  try{
+    const tr = await msalInstance.acquireTokenSilent({ ...loginRequest, account: currentUser });
+    accessToken = tr.accessToken;
+  }catch(e){
+    if(e.name === 'InteractionRequiredAuthError'){ await login(); return; }
+  }
+  const opts = { method, headers: { 'Authorization': 'Bearer '+accessToken, 'Content-Type': 'application/json' } };
+  if(body && (method==='POST'||method==='PATCH')) opts.body = JSON.stringify(body);
+  const resp = await fetch('https://graph.microsoft.com/v1.0/'+endpoint, opts);
+  if(resp.status === 401){ alert('⚠️ Sessione scaduta.'); location.reload(); return; }
+  if(!resp.ok){ const t = await resp.text(); throw new Error('API '+resp.status+': '+t); }
+  if(method==='DELETE' || resp.status===204) return { success:true };
+  return await resp.json();
+}
+
+async function getSiteId(){
+  if(siteId) return siteId;
+  const r = await callGraph('sites/'+SHAREPOINT_HOSTNAME+':'+SITE_PATH);
+  siteId = r.id; return siteId;
+}
+async function getListItems(listName){
+  const site = await getSiteId();
+  const r = await callGraph('sites/'+site+'/lists/'+listName+'/items?expand=fields&$top=5000');
+  return r.value.map(i => ({ ID: i.id, ...i.fields }));
+}
+async function createItem(listName, data){
+  const site = await getSiteId();
+  return await callGraph('sites/'+site+'/lists/'+listName+'/items', 'POST', { fields: data });
+}
+async function updateItem(listName, id, data){
+  const site = await getSiteId();
+  return await callGraph('sites/'+site+'/lists/'+listName+'/items/'+id+'/fields', 'PATCH', data);
+}
+async function deleteItem(listName, id){
+  const site = await getSiteId();
+  return await callGraph('sites/'+site+'/lists/'+listName+'/items/'+id, 'DELETE');
+}
+
+// ============================================================
+// LOAD DATA
+// ============================================================
+async function loadData(){
+  const lb = document.getElementById('loadingBox');
+  lb.style.display = 'block';
+  document.getElementById('attiArea').innerHTML = '';
+  try{
+    // Enti reali da Scadenziario_Comuni (solo attivi)
+    const comuni = await getListItems(LIST_COMUNI);
+    ENTI = comuni
+      .filter(c => !c.StatoEnte || c.StatoEnte === 'Attivo')
+      .map(c => ({ id: c.Title, nome: c.Title, prov: c.Provincia || '' }))
+      .sort((a,b) => a.nome.localeCompare(b.nome));
+
+    // Atti da HUB_FascicoloEnte
+    const raw = await getListItems(LIST_FASCICOLO);
+    ATTI = raw.map(r => ({
+      id: r.ID,
+      ente: r.Title || '',
+      anno: r.Anno || '',
+      cat: r.Categoria || 'altro',
+      oggetto: r.Oggetto || '',
+      isGC: r.OrganoGC === true || r.OrganoGC === 'true',
+      delN: r.DeliberaN || '',
+      delData: toDateOnly(r.DeliberaData),
+      ratN: r.RatificaN || '',
+      ratData: toDateOnly(r.RatificaData),
+      verbN: r.VerbaleN || '',
+      verbData: toDateOnly(r.VerbaleData),
+      esito: r.EsitoRevisore || '',
+      note: r.Note || ''
+    }));
+
+    populateSelects();
+    lb.style.display = 'none';
+    render();
+    toast('✅ Dati caricati — '+ENTI.length+' enti, '+ATTI.length+' atti');
+  }catch(err){
+    lb.style.display = 'none';
+    console.error(err);
+    toast('❌ Errore caricamento: '+err.message, false);
+  }
+}
+
+function populateSelects(){
   const se = document.getElementById('selEnte');
-  ENTI.forEach(e => { const o = document.createElement('option'); o.value = e.id; o.textContent = e.nome + ' (' + e.prov + ')'; se.appendChild(o); });
+  const cur = se.value;
+  se.innerHTML = '<option value="">— Seleziona Ente —</option>';
+  ENTI.forEach(e => { const o = document.createElement('option'); o.value = e.id; o.textContent = e.nome + (e.prov ? ' ('+e.prov+')' : ''); se.appendChild(o); });
+  if(cur && ENTI.some(e => e.id === cur)) se.value = cur;
+
   const sa = document.getElementById('selAnno');
-  ANNI.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; sa.appendChild(o); });
-  sa.value = '2026';
+  const curA = sa.value;
+  const yNow = new Date().getFullYear();
+  const anni = new Set([String(yNow+1), String(yNow), String(yNow-1), String(yNow-2), String(yNow-3)]);
+  ATTI.forEach(a => { if(a.anno) anni.add(a.anno); });
+  const sorted = Array.from(anni).sort().reverse();
+  sa.innerHTML = '';
+  sorted.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; sa.appendChild(o); });
+  sa.value = (curA && sorted.includes(curA)) ? curA : String(yNow);
+
   const fc = document.getElementById('f-cat');
-  Object.entries(CATEGORIE).forEach(([k,v]) => { const o = document.createElement('option'); o.value = k; o.textContent = v.icon + ' ' + v.label; fc.appendChild(o); });
-  renderEsitoPicker();
-  render();
+  if(fc.options.length === 0){
+    Object.entries(CATEGORIE).forEach(([k,v]) => { const o = document.createElement('option'); o.value = k; o.textContent = v.icon+' '+v.label; fc.appendChild(o); });
+  }
 }
 
 function filterEnti(){
@@ -343,7 +514,7 @@ function filterEnti(){
   const cur = se.value;
   se.innerHTML = '<option value="">— Seleziona Ente —</option>';
   ENTI.filter(e => !q || e.nome.toLowerCase().includes(q)).forEach(e => {
-    const o = document.createElement('option'); o.value = e.id; o.textContent = e.nome + ' (' + e.prov + ')'; se.appendChild(o);
+    const o = document.createElement('option'); o.value = e.id; o.textContent = e.nome + (e.prov ? ' ('+e.prov+')' : ''); se.appendChild(o);
   });
   const opts = se.querySelectorAll('option[value]:not([value=""])');
   if(opts.length === 1){ se.value = opts[0].value; }
@@ -359,20 +530,19 @@ function clearKpiFilter(){ kpiFilter = null; }
 // RENDER
 // ============================================================
 function render(){
-  const enteId = parseInt(document.getElementById('selEnte').value);
+  const enteSel = document.getElementById('selEnte').value;
   const anno = document.getElementById('selAnno').value;
   const kpiArea = document.getElementById('kpiArea');
   const bannerArea = document.getElementById('filterBannerArea');
   const toolbarArea = document.getElementById('toolbarArea');
   const attiArea = document.getElementById('attiArea');
 
-  // ---- KPI GLOBALI (tutti gli enti, anno selezionato; ratifiche: TUTTI gli anni) ----
   const attiAnno = ATTI.filter(a => a.anno === anno);
   const gTot = attiAnno.length;
   const gApprovati = attiAnno.filter(a => a.delN).length;
   const gRilievi = attiAnno.filter(a => a.esito === 'favorevole_con_rilievi').length;
   const gAttesa = gTot - gApprovati;
-  const gRatifiche = ATTI.filter(a => giorniRatifica(a) !== null).length; // globale, tutti gli anni
+  const gRatifiche = ATTI.filter(a => giorniRatifica(a) !== null).length;
 
   kpiArea.innerHTML = '<div class="kpi-title">🌍 Panoramica generale — tutti gli enti ('+anno+')</div>'
     + '<div class="kpi-grid">'
@@ -383,12 +553,11 @@ function render(){
     + '<div class="kpi gc '+(kpiFilter==='ratifiche'?'active':'')+'" onclick="setKpiFilter(\'ratifiche\')"><div class="v">'+gRatifiche+'</div><div class="l">🔶 Ratifiche GC pendenti</div><div class="hint-click">👆 clicca per urgenze</div></div>'
     + '</div>';
 
-  // ---- MODALITÀ FILTRO KPI: vista globale cross-ente ----
   if(kpiFilter){
     let filtered, title, bannerCls = '';
     if(kpiFilter === 'ratifiche'){
       filtered = ATTI.filter(a => giorniRatifica(a) !== null).sort((a,b) => giorniRatifica(a) - giorniRatifica(b));
-      title = '🔶 Ratifiche GC pendenti — tutti gli enti, ordinate per urgenza (art. 175 c.4 TUEL)';
+      title = '🔶 Ratifiche GC pendenti — tutti gli enti, per urgenza (art. 175 c.4 TUEL)';
       bannerCls = 'gc-style';
     } else if(kpiFilter === 'rilievi'){
       filtered = attiAnno.filter(a => a.esito === 'favorevole_con_rilievi');
@@ -401,7 +570,6 @@ function render(){
       filtered = attiAnno;
       title = '📋 Tutti gli atti registrati — tutti gli enti ('+anno+')';
     }
-
     bannerArea.innerHTML = '<div class="filter-banner '+bannerCls+'"><div class="fb-text">'+title+' — '+filtered.length+' risultati</div><button class="fb-close" onclick="setKpiFilter(null)">✕ Chiudi elenco</button></div>';
     toolbarArea.innerHTML = '';
     attiArea.innerHTML = filtered.length
@@ -409,18 +577,16 @@ function render(){
       : '<div class="empty"><div class="ic">✅</div><div class="t">Nessun risultato</div><div style="font-size:12px">Tutto in regola per questo criterio</div></div>';
     return;
   }
-
   bannerArea.innerHTML = '';
 
-  // ---- VISTA ENTE SINGOLO ----
-  if(!enteId){
+  if(!enteSel){
     toolbarArea.innerHTML = '';
     attiArea.innerHTML = '<div class="empty"><div class="ic">🏛️</div><div class="t">Seleziona un Ente</div><div style="font-size:12px">Scegli ente e anno, oppure clicca su un KPI per la panoramica globale</div></div>';
     return;
   }
 
-  const ente = ENTI.find(e => e.id === enteId);
-  const atti = ATTI.filter(a => a.enteId === enteId && a.anno === anno)
+  const ente = ENTI.find(e => e.id === enteSel);
+  const atti = ATTI.filter(a => a.ente === enteSel && a.anno === anno)
     .sort((a,b) => Object.keys(CATEGORIE).indexOf(a.cat) - Object.keys(CATEGORIE).indexOf(b.cat));
   const tot = atti.length;
 
@@ -438,11 +604,9 @@ function render(){
     attiArea.innerHTML = '<div class="empty"><div class="ic">📭</div><div class="t">Nessun atto per '+anno+'</div><div style="font-size:12px;margin-bottom:16px">Inizia registrando il primo atto deliberativo</div><button class="btn btn-primary" onclick="openAdd()">➕ Registra primo atto</button></div>';
     return;
   }
-
   attiArea.innerHTML = viewMode === 'compact' ? renderCompact(atti, false) : renderCards(atti);
 }
 
-// ---------- VISTA COMPATTA (tabella) — showEnte per vista globale ----------
 function renderCompact(atti, showEnte){
   let rows = '';
   atti.forEach(a => {
@@ -456,7 +620,6 @@ function renderCompact(atti, showEnte){
       delCol = '<span class="ct-num">n. '+esc(a.delN)+'</span> <span class="ct-date">'+fmtDate(a.delData)+'</span>';
       if(a.isGC) delCol = '<span class="badge gc">GC</span> ' + delCol;
     }
-
     let ratCol = '<span class="ct-dash">—</span>';
     if(a.isGC){
       if(a.ratN){ ratCol = '<span class="ct-num">CC n. '+esc(a.ratN)+'</span> <span class="ct-date">'+fmtDate(a.ratData)+'</span>'; }
@@ -466,41 +629,32 @@ function renderCompact(atti, showEnte){
                : '<span class="badge gc">⏳ entro '+gg+'gg</span>';
       } else { ratCol = '<span class="badge gc">⏳ da ratificare</span>'; }
     }
-
     let revCol = '<span class="ct-dash">—</span>';
     if(a.verbN){ revCol = '<span class="ct-num">n. '+esc(a.verbN)+'</span> <span class="ct-date">'+fmtDate(a.verbData)+'</span>'; }
-
     let esitoCol = '<span class="ct-dash">—</span>';
     if(esito){
       const colors = {fav:'#059669',rilievi:'#d97706',neg:'#dc2626'};
       esitoCol = '<span class="esito-dot" style="color:'+colors[esito.cls]+'">'+esito.icon+' '+esito.label+'</span>';
     }
-
     const clickAction = showEnte
-      ? 'goToAtto('+a.enteId+',\''+a.anno+'\','+a.id+')'
-      : 'setView(\'cards\');setTimeout(()=>{const c=document.getElementById(\'card-'+a.id+'\');if(c){c.classList.add(\'open\');c.scrollIntoView({behavior:\'smooth\',block:\'center\'});}},50)';
+      ? "goToAtto('"+esc(a.ente).replace(/'/g,"\\'")+"','"+a.anno+"','"+a.id+"')"
+      : "setView('cards');setTimeout(()=>{const c=document.getElementById('card-"+a.id+"');if(c){c.classList.add('open');c.scrollIntoView({behavior:'smooth',block:'center'});}},50)";
 
     rows += '<tr onclick="'+clickAction+'">'
       + '<td style="font-size:16px;text-align:center">'+cat.icon+'</td>'
-      + (showEnte ? '<td class="ct-ente">'+esc(enteName(a.enteId))+'<div class="ct-date">'+a.anno+'</div></td>' : '')
+      + (showEnte ? '<td class="ct-ente">'+esc(enteShort(a.ente))+'<div class="ct-date">'+a.anno+'</div></td>' : '')
       + '<td class="ct-atto">'+esc(a.oggetto)+'<div class="ct-date" style="color:'+cat.color+';font-weight:700;font-size:9px;text-transform:uppercase">'+cat.label+'</div></td>'
-      + '<td>'+delCol+'</td>'
-      + '<td>'+ratCol+'</td>'
-      + '<td>'+revCol+'</td>'
-      + '<td>'+esitoCol+'</td>'
-      + '</tr>';
+      + '<td>'+delCol+'</td><td>'+ratCol+'</td><td>'+revCol+'</td><td>'+esitoCol+'</td></tr>';
   });
-
   return '<div class="compact-wrap"><table class="compact-table">'
     + '<thead><tr><th></th>'+(showEnte?'<th>Ente</th>':'')+'<th>Atto</th><th>Delibera</th><th>Ratifica CC</th><th>Verbale Revisore</th><th>Esito Parere</th></tr></thead>'
     + '<tbody>'+rows+'</tbody></table></div>'
     + '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:right">💡 Clicca su una riga per aprire il dettaglio</div>';
 }
 
-// Naviga dall'elenco globale al dettaglio del singolo atto
-function goToAtto(enteId, anno, attoId){
+function goToAtto(ente, anno, attoId){
   kpiFilter = null;
-  document.getElementById('selEnte').value = enteId;
+  document.getElementById('selEnte').value = ente;
   document.getElementById('selAnno').value = anno;
   viewMode = 'cards';
   render();
@@ -510,7 +664,6 @@ function goToAtto(enteId, anno, attoId){
   }, 50);
 }
 
-// ---------- VISTA DETTAGLIO (card) ----------
 function renderCards(atti){
   let html = '';
   atti.forEach(a => {
@@ -523,28 +676,26 @@ function renderCards(atti){
     if(pending){ badges += '<span class="badge pending">⏳ Da approvare</span>'; }
     else if(a.isGC){ badges += '<span class="badge gc">🔶 Delibera GC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
     else{ badges += '<span class="badge delibera">Delibera CC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
-
     if(a.isGC && a.ratN){ badges += '<span class="badge fav">✅ Ratificata CC n. '+esc(a.ratN)+' del '+fmtDate(a.ratData)+'</span>'; }
     else if(gg !== null){
       badges += gg < 0 ? '<span class="badge gc-alert">⛔ RATIFICA SCADUTA da '+Math.abs(gg)+'gg</span>'
               : gg <= 15 ? '<span class="badge gc-alert">🔥 Ratifica entro '+gg+'gg</span>'
               : '<span class="badge gc">⏳ Ratifica entro '+gg+'gg</span>';
     }
-
     if(a.verbN && esito){ badges += '<span class="badge '+esito.cls+'">'+esito.icon+' Verbale n. '+esc(a.verbN)+' del '+fmtDate(a.verbData)+'</span>'; }
 
     let gcBox = '';
     if(a.isGC){
-      let ratContent;
-      if(a.ratN){ ratContent = '<div class="detail-val">Ratificata con Delibera CC n. '+esc(a.ratN)+'</div><div class="detail-sub">Data: '+fmtDate(a.ratData)+'</div>'; }
-      else if(gg !== null && gg < 0){ ratContent = '<div class="detail-val" style="color:#dc2626">⛔ Termine ratifica SCADUTO da '+Math.abs(gg)+' giorni</div><div class="detail-sub">La delibera GC decade se non ratificata nei 60 gg — verificare situazione</div>'; }
-      else if(gg !== null){ ratContent = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare — restano '+gg+' giorni</div><div class="detail-sub">Termine: 60 gg dalla delibera GC (art. 175 c.4 TUEL)</div>'; }
-      else { ratContent = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare in CC</div>'; }
-      gcBox = '<div class="detail-box arancio"><div class="detail-label">🔶 Variazione urgente GC — Ratifica Consiglio (art. 175 c.4 TUEL)</div>'+ratContent+'</div>';
+      let rc;
+      if(a.ratN){ rc = '<div class="detail-val">Ratificata con Delibera CC n. '+esc(a.ratN)+'</div><div class="detail-sub">Data: '+fmtDate(a.ratData)+'</div>'; }
+      else if(gg !== null && gg < 0){ rc = '<div class="detail-val" style="color:#dc2626">⛔ Termine ratifica SCADUTO da '+Math.abs(gg)+' giorni</div><div class="detail-sub">La delibera GC decade se non ratificata nei 60 gg — verificare</div>'; }
+      else if(gg !== null){ rc = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare — restano '+gg+' giorni</div><div class="detail-sub">Termine: 60 gg dalla delibera GC (art. 175 c.4 TUEL)</div>'; }
+      else { rc = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare in CC</div>'; }
+      gcBox = '<div class="detail-box arancio"><div class="detail-label">🔶 Variazione urgente GC — Ratifica Consiglio (art. 175 c.4 TUEL)</div>'+rc+'</div>';
     }
 
     html += '<div class="atto-card" id="card-'+a.id+'">'
-      + '<div class="atto-head" style="border-left-color:'+cat.color+'" onclick="toggleCard('+a.id+')">'
+      + '<div class="atto-head" style="border-left-color:'+cat.color+'" onclick="toggleCard(\''+a.id+'\')">'
       + '<div class="cat-icon" style="background:'+cat.color+'15">'+cat.icon+'</div>'
       + '<div class="atto-body">'
       + '<div class="cat-label" style="color:'+cat.color+'">'+cat.label+'</div>'
@@ -561,23 +712,20 @@ function renderCards(atti){
                    + (esito ? '<div style="margin-top:6px"><span class="badge '+esito.cls+'">'+esito.icon+' '+esito.label+'</span></div>' : '')
                  : '<div class="detail-val" style="color:#9ca0ad">Non ancora emesso</div>')
       + '</div>'
-      + gcBox
-      + '</div>'
+      + gcBox + '</div>'
       + (a.note ? '<div class="note-box">📌 '+esc(a.note)+'</div>' : '')
       + '<div class="action-row">'
-      + '<button class="act-edit" onclick="event.stopPropagation();openEdit('+a.id+')">✏️ Modifica</button>'
-      + '<button class="act-del" onclick="event.stopPropagation();delAtto('+a.id+')">🗑️ Elimina</button>'
+      + '<button class="act-edit" onclick="event.stopPropagation();openEdit(\''+a.id+'\')">✏️ Modifica</button>'
+      + '<button class="act-del" onclick="event.stopPropagation();delAtto(\''+a.id+'\')">🗑️ Elimina</button>'
       + '</div></div></div>';
   });
   return html;
 }
 
-function toggleCard(id){
-  document.getElementById('card-'+id).classList.toggle('open');
-}
+function toggleCard(id){ document.getElementById('card-'+id).classList.toggle('open'); }
 
 // ============================================================
-// MODAL / CRUD
+// MODAL / CRUD → SharePoint
 // ============================================================
 function renderEsitoPicker(){
   const opts = [
@@ -608,45 +756,36 @@ function autoOggetto(){
 }
 
 function openAdd(){
-  const enteId = parseInt(document.getElementById('selEnte').value);
-  if(!enteId){ alert('Seleziona prima un ente'); return; }
-  editId = null;
-  selectedEsito = '';
+  const enteSel = document.getElementById('selEnte').value;
+  if(!enteSel){ alert('Seleziona prima un ente'); return; }
+  editId = null; selectedEsito = '';
   document.getElementById('modalTitle').textContent = '➕ Nuovo Atto Deliberativo';
-  const ente = ENTI.find(e => e.id === enteId);
+  const ente = ENTI.find(e => e.id === enteSel);
   const anno = document.getElementById('selAnno').value;
   document.getElementById('ctxBox').innerHTML = '<strong>🏛️ '+esc(ente.nome)+'</strong> — Anno <strong>'+anno+'</strong>';
   document.getElementById('f-cat').value = 'bilancio';
   document.getElementById('f-oggetto').value = CATEGORIE.bilancio.label + ' ' + anno;
   document.getElementById('f-isGC').checked = false;
   toggleGC();
-  document.getElementById('f-delN').value = '';
-  document.getElementById('f-delData').value = '';
-  document.getElementById('f-ratN').value = '';
-  document.getElementById('f-ratData').value = '';
-  document.getElementById('f-verbN').value = '';
-  document.getElementById('f-verbData').value = '';
-  document.getElementById('f-note').value = '';
+  ['f-delN','f-delData','f-ratN','f-ratData','f-verbN','f-verbData','f-note'].forEach(id => document.getElementById(id).value = '');
   renderEsitoPicker();
   document.getElementById('mo').classList.add('show');
 }
 
 function openEdit(id){
-  const a = ATTI.find(x => x.id === id);
+  const a = ATTI.find(x => String(x.id) === String(id));
   if(!a) return;
-  editId = id;
-  selectedEsito = a.esito || '';
+  editId = a.id; selectedEsito = a.esito || '';
   document.getElementById('modalTitle').textContent = '✏️ Modifica Atto';
-  const ente = ENTI.find(e => e.id === a.enteId);
-  document.getElementById('ctxBox').innerHTML = '<strong>🏛️ '+esc(ente.nome)+'</strong> — Anno <strong>'+a.anno+'</strong>';
-  document.getElementById('f-cat').value = a.cat;
+  document.getElementById('ctxBox').innerHTML = '<strong>🏛️ '+esc(a.ente)+'</strong> — Anno <strong>'+a.anno+'</strong>';
+  document.getElementById('f-cat').value = CATEGORIE[a.cat] ? a.cat : 'altro';
   document.getElementById('f-oggetto').value = a.oggetto;
   document.getElementById('f-isGC').checked = !!a.isGC;
   toggleGC();
   document.getElementById('f-delN').value = a.delN;
   document.getElementById('f-delData').value = a.delData;
-  document.getElementById('f-ratN').value = a.ratN || '';
-  document.getElementById('f-ratData').value = a.ratData || '';
+  document.getElementById('f-ratN').value = a.ratN;
+  document.getElementById('f-ratData').value = a.ratData;
   document.getElementById('f-verbN').value = a.verbN;
   document.getElementById('f-verbData').value = a.verbData;
   document.getElementById('f-note').value = a.note;
@@ -656,46 +795,74 @@ function openEdit(id){
 
 function closeModal(){ document.getElementById('mo').classList.remove('show'); }
 
-function saveAtto(){
+async function saveAtto(){
   const oggetto = document.getElementById('f-oggetto').value.trim();
   if(!oggetto){ alert('Inserisci l\'oggetto dell\'atto'); return; }
-  const data = {
-    cat: document.getElementById('f-cat').value,
-    oggetto: oggetto,
-    isGC: document.getElementById('f-isGC').checked,
-    delN: document.getElementById('f-delN').value.trim(),
-    delData: document.getElementById('f-delData').value,
-    ratN: document.getElementById('f-ratN').value.trim(),
-    ratData: document.getElementById('f-ratData').value,
-    verbN: document.getElementById('f-verbN').value.trim(),
-    verbData: document.getElementById('f-verbData').value,
-    esito: selectedEsito,
-    note: document.getElementById('f-note').value.trim()
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = '⏳ Salvataggio...';
+
+  const dOrNull = v => v ? v + 'T00:00:00Z' : null;
+  const fields = {
+    Anno: editId ? (ATTI.find(x=>String(x.id)===String(editId))?.anno || document.getElementById('selAnno').value) : document.getElementById('selAnno').value,
+    Categoria: document.getElementById('f-cat').value,
+    Oggetto: oggetto,
+    OrganoGC: document.getElementById('f-isGC').checked,
+    DeliberaN: document.getElementById('f-delN').value.trim(),
+    DeliberaData: dOrNull(document.getElementById('f-delData').value),
+    RatificaN: document.getElementById('f-ratN').value.trim(),
+    RatificaData: dOrNull(document.getElementById('f-ratData').value),
+    VerbaleN: document.getElementById('f-verbN').value.trim(),
+    VerbaleData: dOrNull(document.getElementById('f-verbData').value),
+    EsitoRevisore: selectedEsito,
+    Note: document.getElementById('f-note').value.trim()
   };
-  if(editId){
-    const a = ATTI.find(x => x.id === editId);
-    if(a) Object.assign(a, data);
-  } else {
-    ATTI.push({
-      id: nextId++,
-      enteId: parseInt(document.getElementById('selEnte').value),
-      anno: document.getElementById('selAnno').value,
-      ...data
-    });
+
+  try{
+    if(editId){
+      await updateItem(LIST_FASCICOLO, editId, fields);
+      toast('✅ Atto aggiornato');
+    } else {
+      fields.Title = document.getElementById('selEnte').value; // Ente
+      await createItem(LIST_FASCICOLO, fields);
+      toast('✅ Atto registrato');
+    }
+    closeModal();
+    await loadData();
+  }catch(err){
+    console.error(err);
+    toast('❌ Errore salvataggio: '+err.message, false);
+  }finally{
+    btn.disabled = false; btn.textContent = '💾 Salva Atto';
   }
-  closeModal();
-  render();
 }
 
-function delAtto(id){
-  const a = ATTI.find(x => x.id === id);
+async function delAtto(id){
+  const a = ATTI.find(x => String(x.id) === String(id));
   if(!a) return;
-  if(!confirm('Eliminare questo atto?\n\n' + a.oggetto)) return;
-  ATTI = ATTI.filter(x => x.id !== id);
-  render();
+  if(!confirm('Eliminare questo atto?\n\n'+a.oggetto+'\n('+a.ente+' — '+a.anno+')')) return;
+  try{
+    await deleteItem(LIST_FASCICOLO, a.id);
+    toast('✅ Atto eliminato');
+    await loadData();
+  }catch(err){
+    console.error(err);
+    toast('❌ Errore eliminazione: '+err.message, false);
+  }
 }
 
-init();
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', async function(){
+  document.getElementById('loginBtn').addEventListener('click', login);
+  document.getElementById('btnLogout').addEventListener('click', logout);
+  document.getElementById('btnSync').addEventListener('click', loadData);
+  try{
+    await msalInstance.initialize();
+    const accounts = msalInstance.getAllAccounts();
+    if(accounts.length > 0){ await handleAuth(); }
+  }catch(err){ console.error('Init error:', err); }
+});
 </script>
 </body>
 </html>
