@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fascicolo Ente — Studio Grismondi srl</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#1a56db;--primary-light:#e8effc;--primary-dark:#1042a3;--accent:#7c3aed;--accent-light:#ede9fe;--success:#059669;--success-light:#d1fae5;--warning:#d97706;--warning-light:#fef3c7;--danger:#dc2626;--danger-light:#fee2e2;--info:#0891b2;--info-light:#cffafe;--gc:#ea580c;--gc-light:#fff7ed;--bg:#f0f2f5;--surface:#fff;--border:#e2e5ea;--border-light:#f0f2f5;--text:#1a1d23;--text-secondary:#5f6577;--text-muted:#9ca0ad;--nav-bg:#0f172a;--shadow-sm:0 1px 2px rgba(0,0,0,0.06);--shadow:0 2px 8px rgba(0,0,0,0.08);--shadow-lg:0 8px 24px rgba(0,0,0,0.12);--radius:10px;--radius-sm:6px;--radius-lg:14px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;}
+.top-nav{background:var(--nav-bg);padding:0 16px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.2);gap:10px;}
+.brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;color:white;flex-shrink:0;}
+.brand-text{font-family:'Space Grotesk',sans-serif;color:white;font-size:15px;font-weight:700;letter-spacing:-0.3px;}
+.brand-sub{color:rgba(255,255,255,0.5);font-size:10px;}
+.nav-tab-active{color:white;background:var(--primary);padding:0 14px;height:100%;display:flex;align-items:center;font-size:12px;font-weight:600;gap:5px;margin-left:8px;}
+.beta-pill{background:var(--warning);color:white;font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px;letter-spacing:0.5px;}
+.main-content{flex:1;padding:16px;max-width:1200px;width:100%;margin:0 auto;}
+.search-panel{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;margin-bottom:16px;}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.section-sub{font-size:12px;color:var(--text-secondary);margin-bottom:16px;}
+.search-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+.field{flex:1;min-width:180px;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;}
+.field select,.field input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;background:white;color:var(--text);}
+.field select:focus,.field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,86,219,0.1);}
+.kpi-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
+.kpi{background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow-sm);border-left:3px solid var(--primary);cursor:pointer;transition:all 0.15s;border-top:1px solid transparent;border-right:1px solid transparent;border-bottom:1px solid transparent;}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+.kpi.active{outline:2px solid var(--primary);outline-offset:-1px;background:var(--primary-light);}
+.kpi .v{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:var(--primary);}
+.kpi .l{font-size:10px;color:var(--text-secondary);margin-top:2px;}
+.kpi.green{border-left-color:var(--success);}.kpi.green .v{color:var(--success);}
+.kpi.orange{border-left-color:var(--warning);}.kpi.orange .v{color:var(--warning);}.kpi.orange.active{outline-color:var(--warning);background:var(--warning-light);}
+.kpi.purple{border-left-color:var(--accent);}.kpi.purple .v{color:var(--accent);}.kpi.purple.active{outline-color:var(--accent);background:var(--accent-light);}
+.kpi.gc{border-left-color:var(--gc);}.kpi.gc .v{color:var(--gc);}.kpi.gc.active{outline-color:var(--gc);background:var(--gc-light);}
+.kpi .hint-click{font-size:8px;color:var(--text-muted);margin-top:4px;}
+.filter-banner{background:var(--primary-light);border:1px solid var(--primary);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.filter-banner .fb-text{font-size:12px;font-weight:700;color:var(--primary);}
+.filter-banner.gc-style{background:var(--gc-light);border-color:var(--gc);}
+.filter-banner.gc-style .fb-text{color:var(--gc);}
+.filter-banner.orange-style{background:var(--warning-light);border-color:var(--warning);}
+.filter-banner.orange-style .fb-text{color:var(--warning);}
+.fb-close{border:none;background:white;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;box-shadow:var(--shadow-sm);}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.toolbar .info{font-size:13px;font-weight:700;color:var(--text-secondary);}
+.toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.view-toggle{display:flex;background:var(--surface);border-radius:var(--radius-sm);padding:3px;box-shadow:var(--shadow-sm);gap:2px;}
+.view-btn{padding:6px 12px;border:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;background:none;color:var(--text-secondary);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.view-btn.active{background:var(--primary);color:white;}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);font-family:'DM Sans',sans-serif;transition:all 0.15s;background:white;color:var(--text-secondary);}
+.btn:hover{background:var(--bg);}
+.btn-primary{background:var(--primary);color:white;border-color:var(--primary);}
+.btn-primary:hover{background:var(--primary-dark);}
+/* Card view */
+.atto-card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;}
+.atto-head{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-left:4px solid var(--primary);transition:background 0.15s;}
+.atto-head:hover{background:#fafbfd;}
+.cat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.atto-body{flex:1;min-width:0;}
+.cat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;}
+.atto-title{font-size:14px;font-weight:700;}
+.badge-row{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;}
+.badge.delibera{background:var(--primary-light);color:var(--primary);}
+.badge.fav{background:var(--success-light);color:var(--success);}
+.badge.rilievi{background:var(--warning-light);color:var(--warning);}
+.badge.neg{background:var(--danger-light);color:var(--danger);}
+.badge.pending{background:#fff7ed;color:#c2410c;}
+.badge.gc{background:var(--gc-light);color:var(--gc);}
+.badge.gc-alert{background:var(--danger-light);color:var(--danger);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.chevron{margin-left:auto;font-size:13px;color:var(--text-muted);transition:transform 0.2s;flex-shrink:0;}
+.atto-card.open .chevron{transform:rotate(180deg);}
+.atto-detail{display:none;padding:0 16px 16px;border-top:1px solid var(--border-light);}
+.atto-card.open .atto-detail{display:block;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+.detail-box{background:#f8f9fb;border-radius:var(--radius);padding:14px;}
+.detail-box.blu{border-left:3px solid var(--primary);}
+.detail-box.verde{border-left:3px solid var(--success);}
+.detail-box.arancio{border-left:3px solid var(--gc);grid-column:1/-1;}
+.detail-label{font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;}
+.detail-val{font-size:14px;font-weight:700;}
+.detail-sub{font-size:11px;color:var(--text-secondary);margin-top:2px;}
+.note-box{background:#fffbeb;border-radius:8px;padding:8px 12px;margin-top:12px;font-size:11px;color:#92400e;border-left:3px solid #f59e0b;}
+.action-row{display:flex;gap:6px;margin-top:12px;justify-content:flex-end;}
+.act-edit{background:var(--primary-light);color:var(--primary);border:none;padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.act-del{background:var(--danger-light);color:var(--danger);border:none;padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
+/* Compact view */
+.compact-wrap{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.compact-table{width:100%;border-collapse:collapse;min-width:760px;}
+.compact-table thead th{background:var(--nav-bg);color:rgba(255,255,255,0.85);padding:9px 10px;font-size:10px;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;}
+.compact-table tbody tr{border-bottom:1px solid var(--border-light);cursor:pointer;transition:background 0.1s;}
+.compact-table tbody tr:hover{background:#f8f9fb;}
+.compact-table tbody td{padding:8px 10px;font-size:11px;vertical-align:middle;white-space:nowrap;}
+.ct-atto{font-weight:700;font-size:12px;white-space:normal;min-width:170px;}
+.ct-ente{font-weight:700;font-size:11px;color:var(--primary);white-space:normal;min-width:120px;}
+.ct-num{font-weight:700;font-family:'Space Grotesk',sans-serif;}
+.ct-date{font-size:10px;color:var(--text-secondary);}
+.ct-dash{color:var(--text-muted);}
+.esito-dot{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:10px;}
+.empty{text-align:center;padding:48px;color:var(--text-muted);}
+.empty .ic{font-size:48px;margin-bottom:12px;}
+.empty .t{font-size:16px;font-weight:700;margin-bottom:6px;color:var(--text);}
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px);padding:16px;}
+.modal-overlay.show{display:flex;}
+.modal{background:white;border-radius:var(--radius-lg);width:100%;max-width:580px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
+.modal-header h3{font-size:15px;font-weight:700;font-family:'Space Grotesk',sans-serif;}
+.modal-close{width:28px;height:28px;border:none;background:var(--bg);border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);}
+.modal-close:hover{background:var(--danger-light);color:var(--danger);}
+.modal-body{padding:16px 18px;}
+.ctx-box{background:var(--bg);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:12px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,86,219,0.1);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.separator{border-top:1px solid var(--border);margin:18px 0 14px;position:relative;}
+.sep-label{position:absolute;top:-9px;left:12px;background:white;padding:0 8px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;}
+.hint{font-size:10px;color:var(--text-muted);margin-top:-8px;margin-bottom:12px;}
+.gc-toggle{display:flex;align-items:center;gap:10px;background:var(--gc-light);border:1px solid #fed7aa;border-radius:var(--radius);padding:10px 14px;cursor:pointer;margin-bottom:14px;}
+.gc-toggle input{width:16px;height:16px;accent-color:var(--gc);cursor:pointer;}
+.gc-toggle .gc-lab{font-size:12px;font-weight:700;color:var(--gc);}
+.gc-toggle .gc-sub{font-size:10px;color:#9a3412;}
+.gc-fields{display:none;background:var(--gc-light);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;border:1px dashed #fdba74;}
+.gc-fields.show{display:block;}
+.esito-picker{display:flex;gap:8px;flex-wrap:wrap;}
+.esito-opt{padding:6px 12px;border-radius:8px;border:2px solid var(--border);background:white;cursor:pointer;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px;transition:all 0.15s;}
+.esito-opt.sel-fav{border-color:var(--success);background:var(--success-light);color:var(--success);font-weight:700;}
+.esito-opt.sel-ril{border-color:var(--warning);background:var(--warning-light);color:var(--warning);font-weight:700;}
+.esito-opt.sel-neg{border-color:var(--danger);background:var(--danger-light);color:var(--danger);font-weight:700;}
+.esito-opt.sel-none{border-color:var(--text-muted);background:var(--bg);color:var(--text-secondary);font-weight:700;}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--border);position:sticky;bottom:0;background:white;}
+.app-footer{background:var(--nav-bg);color:rgba(255,255,255,0.4);padding:16px;text-align:center;font-size:9px;margin-top:24px;}
+@media(max-width:768px){
+.main-content{padding:10px;}
+.section-title{font-size:18px;}
+.detail-grid{grid-template-columns:1fr;}
+.form-row{grid-template-columns:1fr;}
+.kpi-grid{grid-template-columns:1fr 1fr;}
+.brand-sub{display:none;}
+}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <div class="brand-icon">☁️</div>
+  <div>
+    <div class="brand-text">PA CLOUD PRO</div>
+    <div class="brand-sub">Studio Grismondi srl</div>
+  </div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span></div>
+</nav>
+
+<div class="main-content">
+  <div class="search-panel">
+    <h2 class="section-title">🏛️ Fascicolo Ente</h2>
+    <div class="section-sub">Registro delibere CC/GC e pareri organo di revisione per ente e anno</div>
+    <div class="search-row">
+      <div class="field" style="min-width:260px;flex:2">
+        <label>Ente</label>
+        <select id="selEnte" onchange="clearKpiFilter();render()">
+          <option value="">— Seleziona Ente —</option>
+        </select>
+      </div>
+      <div class="field" style="max-width:140px">
+        <label>Anno</label>
+        <select id="selAnno" onchange="render()"></select>
+      </div>
+      <div class="field">
+        <label>Filtro rapido enti</label>
+        <input type="text" id="searchEnte" placeholder="🔍 Digita per filtrare..." oninput="filterEnti()">
+      </div>
+    </div>
+  </div>
+
+  <div id="kpiArea"></div>
+  <div id="filterBannerArea"></div>
+  <div id="toolbarArea"></div>
+  <div id="attiArea"></div>
+</div>
+
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Modulo Fascicolo Ente (BETA sperimentale — solo Amministratori)</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="mo" onclick="if(event.target===this)closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modalTitle">➕ Nuovo Atto</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ctx-box" id="ctxBox"></div>
+      <div class="form-group">
+        <label>Tipo Atto</label>
+        <select id="f-cat" onchange="autoOggetto()"></select>
+      </div>
+      <div class="form-group">
+        <label>Oggetto</label>
+        <input type="text" id="f-oggetto" placeholder="es: Approvazione Bilancio di Previsione 2026-2028">
+      </div>
+
+      <label class="gc-toggle">
+        <input type="checkbox" id="f-isGC" onchange="toggleGC()">
+        <div>
+          <div class="gc-lab">🔶 Variazione urgente di Giunta Comunale</div>
+          <div class="gc-sub">Da ratificare in Consiglio entro 60 giorni — art. 175 c.4 TUEL</div>
+        </div>
+      </label>
+
+      <div class="separator"><span class="sep-label" id="sepDelLabel">📜 Delibera Consiglio Comunale</span></div>
+      <div class="form-row">
+        <div class="form-group"><label id="delNLabel">N° Delibera</label><input type="text" id="f-delN" placeholder="es: 42"></div>
+        <div class="form-group"><label>Data Delibera</label><input type="date" id="f-delData"></div>
+      </div>
+      <div class="hint">💡 Lascia vuoto se l'atto non è ancora stato approvato — potrai completarlo dopo</div>
+
+      <div class="gc-fields" id="gcFields">
+        <div style="font-size:11px;font-weight:700;color:var(--gc);margin-bottom:10px">⚖️ Ratifica del Consiglio Comunale (entro 60 gg dalla delibera GC)</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label>N° Delibera CC di ratifica</label><input type="text" id="f-ratN" placeholder="es: 31"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Data Ratifica</label><input type="date" id="f-ratData"></div>
+        </div>
+      </div>
+
+      <div class="separator"><span class="sep-label">📝 Parere Organo di Revisione</span></div>
+      <div class="form-row">
+        <div class="form-group"><label>N° Verbale</label><input type="text" id="f-verbN" placeholder="es: 12"></div>
+        <div class="form-group"><label>Data Verbale</label><input type="date" id="f-verbData"></div>
+      </div>
+      <div class="form-group">
+        <label>Esito Parere</label>
+        <div class="esito-picker" id="esitoPicker"></div>
+      </div>
+      <div class="separator"><span class="sep-label">📌 Note</span></div>
+      <div class="form-group">
+        <textarea id="f-note" rows="2" placeholder="Note operative, rilievi, osservazioni..."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveAtto()">💾 Salva Atto</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// FASCICOLO ENTE — BETA sperimentale (solo Admin)
+// KPI GLOBALI cliccabili su tutti gli enti
+// In FASE 4: dati da SharePoint HUB_FascicoloEnte
+// Colonne: Ente, Anno, Categoria, Oggetto, OrganoGC (Sì/No),
+//          DeliberaN, DeliberaData, RatificaN, RatificaData,
+//          VerbaleN, VerbaleData, EsitoRevisore, Note
+// ============================================================
+
+const ENTI = [
+  {id:1, nome:'Comune di Tavernola Bergamasca', prov:'BG'},
+  {id:2, nome:'Comune di Castro', prov:'BG'},
+  {id:3, nome:'Comune di Solto Collina', prov:'BG'},
+  {id:4, nome:'Comune di Vigolo', prov:'BG'},
+  {id:5, nome:'Comune di Predore', prov:'BG'},
+  {id:6, nome:'Comune di Riva di Solto', prov:'BG'},
+  {id:7, nome:'Comune di Sarnico', prov:'BG'},
+  {id:8, nome:'Comune di Lovere', prov:'BG'}
+];
+
+const ANNI = ['2026','2025','2024','2023'];
+
+const CATEGORIE = {
+  bilancio:{label:'Bilancio di Previsione',icon:'📊',color:'#1a56db'},
+  rendiconto:{label:'Rendiconto di Gestione',icon:'📋',color:'#059669'},
+  salvaguardia:{label:'Salvaguardia Equilibri',icon:'⚖️',color:'#d97706'},
+  assestamento:{label:'Assestamento Generale',icon:'🔄',color:'#7c3aed'},
+  dup:{label:'DUP',icon:'📄',color:'#0891b2'},
+  variazioni:{label:'Variazioni di Bilancio',icon:'📝',color:'#dc2626'},
+  tari:{label:'Tariffe TARI',icon:'🗑️',color:'#b45309'},
+  imu:{label:'Aliquote IMU',icon:'🏠',color:'#6d28d9'},
+  conto_annuale:{label:'Conto Annuale Personale',icon:'👥',color:'#0d9488'},
+  piano_performance:{label:'Piano Performance',icon:'🎯',color:'#e11d48'},
+  altro:{label:'Altro atto',icon:'📎',color:'#64748b'}
+};
+
+const ESITI = {
+  favorevole:{label:'Favorevole',cls:'fav',icon:'✅'},
+  favorevole_con_rilievi:{label:'Fav. con rilievi',cls:'rilievi',icon:'⚠️'},
+  negativo:{label:'Negativo',cls:'neg',icon:'❌'}
+};
+
+// DATI DEMO
+let ATTI = [
+  {id:1,enteId:1,anno:'2025',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2025-2027',isGC:false,delN:'42',delData:'2024-12-20',ratN:'',ratData:'',verbN:'12',verbData:'2024-12-18',esito:'favorevole',note:'Approvato con emendamento su Missione 1'},
+  {id:2,enteId:1,anno:'2025',cat:'rendiconto',oggetto:'Approvazione Rendiconto di Gestione 2024',isGC:false,delN:'18',delData:'2025-04-28',ratN:'',ratData:'',verbN:'5',verbData:'2025-04-25',esito:'favorevole',note:''},
+  {id:3,enteId:1,anno:'2025',cat:'salvaguardia',oggetto:'Salvaguardia equilibri di bilancio 2025',isGC:false,delN:'28',delData:'2025-07-29',ratN:'',ratData:'',verbN:'8',verbData:'2025-07-27',esito:'favorevole',note:''},
+  {id:4,enteId:1,anno:'2025',cat:'variazioni',oggetto:'Variazione urgente GC n.2/2025 — utilizzo avanzo',isGC:true,delN:'55',delData:'2025-09-10',ratN:'38',ratData:'2025-10-20',verbN:'9',verbData:'2025-09-08',esito:'favorevole',note:'Ratificata nei termini'},
+  {id:5,enteId:1,anno:'2025',cat:'tari',oggetto:'Approvazione tariffe TARI 2025',isGC:false,delN:'15',delData:'2025-04-28',ratN:'',ratData:'',verbN:'4',verbData:'2025-04-26',esito:'favorevole',note:'Aumento +2,3% rispetto 2024'},
+  {id:6,enteId:1,anno:'2026',cat:'bilancio',oggetto:'Bilancio di Previsione 2026-2028',isGC:false,delN:'',delData:'',ratN:'',ratData:'',verbN:'',verbData:'',esito:'',note:'Da approvare entro termini di legge'},
+  {id:7,enteId:1,anno:'2026',cat:'variazioni',oggetto:'Variazione urgente GC n.1/2026 — somma urgenza viabilità',isGC:true,delN:'12',delData:'2026-04-05',ratN:'',ratData:'',verbN:'3',verbData:'2026-04-03',esito:'favorevole',note:'RATIFICA CC DA CALENDARIZZARE'},
+  {id:8,enteId:2,anno:'2025',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2025-2027',isGC:false,delN:'38',delData:'2024-12-19',ratN:'',ratData:'',verbN:'10',verbData:'2024-12-17',esito:'favorevole',note:''},
+  {id:9,enteId:2,anno:'2025',cat:'rendiconto',oggetto:'Approvazione Rendiconto di Gestione 2024',isGC:false,delN:'22',delData:'2025-04-29',ratN:'',ratData:'',verbN:'6',verbData:'2025-04-27',esito:'favorevole_con_rilievi',note:'Rilievo su residui attivi vetusti'},
+  {id:10,enteId:2,anno:'2026',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2026-2028',isGC:false,delN:'5',delData:'2026-02-25',ratN:'',ratData:'',verbN:'2',verbData:'2026-02-23',esito:'favorevole',note:'Approvato nei termini'},
+  {id:11,enteId:2,anno:'2026',cat:'variazioni',oggetto:'Variazione urgente GC n.3/2026 — contributo regionale',isGC:true,delN:'22',delData:'2026-03-15',ratN:'',ratData:'',verbN:'4',verbData:'2026-03-13',esito:'favorevole',note:''},
+  {id:12,enteId:3,anno:'2025',cat:'bilancio',oggetto:'Approvazione Bilancio di Previsione 2025-2027',isGC:false,delN:'35',delData:'2024-12-21',ratN:'',ratData:'',verbN:'9',verbData:'2024-12-19',esito:'favorevole',note:''},
+  {id:13,enteId:3,anno:'2026',cat:'rendiconto',oggetto:'Rendiconto di Gestione 2025',isGC:false,delN:'',delData:'',ratN:'',ratData:'',verbN:'',verbData:'',esito:'',note:'In preparazione'}
+];
+let nextId = 100;
+let editId = null;
+let selectedEsito = '';
+let viewMode = 'compact';
+let kpiFilter = null; // null | 'tutti' | 'rilievi' | 'attesa' | 'ratifiche'
+
+const fmtDate = d => { if(!d) return '—'; const p = d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const enteName = id => { const e = ENTI.find(x => x.id === id); return e ? e.nome.replace('Comune di ','') : '?'; };
+
+// Giorni rimanenti per ratifica GC (60 gg — art. 175 c.4 TUEL)
+function giorniRatifica(a){
+  if(!a.isGC || !a.delData || a.ratN) return null;
+  const del = new Date(a.delData+'T00:00:00');
+  const scad = new Date(del); scad.setDate(scad.getDate()+60);
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  return Math.ceil((scad - oggi)/(1000*60*60*24));
+}
+
+function init(){
+  const se = document.getElementById('selEnte');
+  ENTI.forEach(e => { const o = document.createElement('option'); o.value = e.id; o.textContent = e.nome + ' (' + e.prov + ')'; se.appendChild(o); });
+  const sa = document.getElementById('selAnno');
+  ANNI.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; sa.appendChild(o); });
+  sa.value = '2026';
+  const fc = document.getElementById('f-cat');
+  Object.entries(CATEGORIE).forEach(([k,v]) => { const o = document.createElement('option'); o.value = k; o.textContent = v.icon + ' ' + v.label; fc.appendChild(o); });
+  renderEsitoPicker();
+  render();
+}
+
+function filterEnti(){
+  const q = document.getElementById('searchEnte').value.toLowerCase();
+  const se = document.getElementById('selEnte');
+  const cur = se.value;
+  se.innerHTML = '<option value="">— Seleziona Ente —</option>';
+  ENTI.filter(e => !q || e.nome.toLowerCase().includes(q)).forEach(e => {
+    const o = document.createElement('option'); o.value = e.id; o.textContent = e.nome + ' (' + e.prov + ')'; se.appendChild(o);
+  });
+  const opts = se.querySelectorAll('option[value]:not([value=""])');
+  if(opts.length === 1){ se.value = opts[0].value; }
+  else if([...opts].some(o => o.value === cur)){ se.value = cur; }
+  render();
+}
+
+function setView(v){ viewMode = v; render(); }
+function setKpiFilter(f){ kpiFilter = (kpiFilter === f) ? null : f; render(); }
+function clearKpiFilter(){ kpiFilter = null; }
+
+// ============================================================
+// RENDER
+// ============================================================
+function render(){
+  const enteId = parseInt(document.getElementById('selEnte').value);
+  const anno = document.getElementById('selAnno').value;
+  const kpiArea = document.getElementById('kpiArea');
+  const bannerArea = document.getElementById('filterBannerArea');
+  const toolbarArea = document.getElementById('toolbarArea');
+  const attiArea = document.getElementById('attiArea');
+
+  // ---- KPI GLOBALI (tutti gli enti, anno selezionato; ratifiche: TUTTI gli anni) ----
+  const attiAnno = ATTI.filter(a => a.anno === anno);
+  const gTot = attiAnno.length;
+  const gApprovati = attiAnno.filter(a => a.delN).length;
+  const gRilievi = attiAnno.filter(a => a.esito === 'favorevole_con_rilievi').length;
+  const gAttesa = gTot - gApprovati;
+  const gRatifiche = ATTI.filter(a => giorniRatifica(a) !== null).length; // globale, tutti gli anni
+
+  kpiArea.innerHTML = '<div class="kpi-title">🌍 Panoramica generale — tutti gli enti ('+anno+')</div>'
+    + '<div class="kpi-grid">'
+    + '<div class="kpi '+(kpiFilter==='tutti'?'active':'')+'" onclick="setKpiFilter(\'tutti\')"><div class="v">'+gTot+'</div><div class="l">Atti registrati '+anno+'</div><div class="hint-click">👆 clicca per elenco</div></div>'
+    + '<div class="kpi green" style="cursor:default"><div class="v">'+gApprovati+'/'+gTot+'</div><div class="l">Approvati</div></div>'
+    + '<div class="kpi orange '+(kpiFilter==='rilievi'?'active':'')+'" onclick="setKpiFilter(\'rilievi\')"><div class="v">'+gRilievi+'</div><div class="l">Pareri con rilievi</div><div class="hint-click">👆 clicca per elenco</div></div>'
+    + '<div class="kpi purple '+(kpiFilter==='attesa'?'active':'')+'" onclick="setKpiFilter(\'attesa\')"><div class="v">'+gAttesa+'</div><div class="l">In attesa approvazione</div><div class="hint-click">👆 clicca per elenco</div></div>'
+    + '<div class="kpi gc '+(kpiFilter==='ratifiche'?'active':'')+'" onclick="setKpiFilter(\'ratifiche\')"><div class="v">'+gRatifiche+'</div><div class="l">🔶 Ratifiche GC pendenti</div><div class="hint-click">👆 clicca per urgenze</div></div>'
+    + '</div>';
+
+  // ---- MODALITÀ FILTRO KPI: vista globale cross-ente ----
+  if(kpiFilter){
+    let filtered, title, bannerCls = '';
+    if(kpiFilter === 'ratifiche'){
+      filtered = ATTI.filter(a => giorniRatifica(a) !== null).sort((a,b) => giorniRatifica(a) - giorniRatifica(b));
+      title = '🔶 Ratifiche GC pendenti — tutti gli enti, ordinate per urgenza (art. 175 c.4 TUEL)';
+      bannerCls = 'gc-style';
+    } else if(kpiFilter === 'rilievi'){
+      filtered = attiAnno.filter(a => a.esito === 'favorevole_con_rilievi');
+      title = '⚠️ Pareri con rilievi — tutti gli enti ('+anno+')';
+      bannerCls = 'orange-style';
+    } else if(kpiFilter === 'attesa'){
+      filtered = attiAnno.filter(a => !a.delN);
+      title = '⏳ Atti in attesa di approvazione — tutti gli enti ('+anno+')';
+    } else {
+      filtered = attiAnno;
+      title = '📋 Tutti gli atti registrati — tutti gli enti ('+anno+')';
+    }
+
+    bannerArea.innerHTML = '<div class="filter-banner '+bannerCls+'"><div class="fb-text">'+title+' — '+filtered.length+' risultati</div><button class="fb-close" onclick="setKpiFilter(null)">✕ Chiudi elenco</button></div>';
+    toolbarArea.innerHTML = '';
+    attiArea.innerHTML = filtered.length
+      ? renderCompact(filtered, true)
+      : '<div class="empty"><div class="ic">✅</div><div class="t">Nessun risultato</div><div style="font-size:12px">Tutto in regola per questo criterio</div></div>';
+    return;
+  }
+
+  bannerArea.innerHTML = '';
+
+  // ---- VISTA ENTE SINGOLO ----
+  if(!enteId){
+    toolbarArea.innerHTML = '';
+    attiArea.innerHTML = '<div class="empty"><div class="ic">🏛️</div><div class="t">Seleziona un Ente</div><div style="font-size:12px">Scegli ente e anno, oppure clicca su un KPI per la panoramica globale</div></div>';
+    return;
+  }
+
+  const ente = ENTI.find(e => e.id === enteId);
+  const atti = ATTI.filter(a => a.enteId === enteId && a.anno === anno)
+    .sort((a,b) => Object.keys(CATEGORIE).indexOf(a.cat) - Object.keys(CATEGORIE).indexOf(b.cat));
+  const tot = atti.length;
+
+  toolbarArea.innerHTML = '<div class="toolbar">'
+    + '<div class="info">📋 '+tot+' atti — '+esc(ente.nome)+' — '+anno+'</div>'
+    + '<div class="toolbar-right">'
+    + '<div class="view-toggle">'
+    + '<button class="view-btn '+(viewMode==='compact'?'active':'')+'" onclick="setView(\'compact\')">≡ Compatta</button>'
+    + '<button class="view-btn '+(viewMode==='cards'?'active':'')+'" onclick="setView(\'cards\')">📋 Dettaglio</button>'
+    + '</div>'
+    + '<button class="btn btn-primary" onclick="openAdd()">➕ Nuovo Atto</button>'
+    + '</div></div>';
+
+  if(tot === 0){
+    attiArea.innerHTML = '<div class="empty"><div class="ic">📭</div><div class="t">Nessun atto per '+anno+'</div><div style="font-size:12px;margin-bottom:16px">Inizia registrando il primo atto deliberativo</div><button class="btn btn-primary" onclick="openAdd()">➕ Registra primo atto</button></div>';
+    return;
+  }
+
+  attiArea.innerHTML = viewMode === 'compact' ? renderCompact(atti, false) : renderCards(atti);
+}
+
+// ---------- VISTA COMPATTA (tabella) — showEnte per vista globale ----------
+function renderCompact(atti, showEnte){
+  let rows = '';
+  atti.forEach(a => {
+    const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
+    const esito = ESITI[a.esito];
+    const gg = giorniRatifica(a);
+
+    let delCol;
+    if(!a.delN){ delCol = '<span class="badge pending">⏳ Da approvare</span>'; }
+    else{
+      delCol = '<span class="ct-num">n. '+esc(a.delN)+'</span> <span class="ct-date">'+fmtDate(a.delData)+'</span>';
+      if(a.isGC) delCol = '<span class="badge gc">GC</span> ' + delCol;
+    }
+
+    let ratCol = '<span class="ct-dash">—</span>';
+    if(a.isGC){
+      if(a.ratN){ ratCol = '<span class="ct-num">CC n. '+esc(a.ratN)+'</span> <span class="ct-date">'+fmtDate(a.ratData)+'</span>'; }
+      else if(gg !== null){
+        ratCol = gg < 0 ? '<span class="badge gc-alert">⛔ SCADUTA ('+Math.abs(gg)+'gg fa)</span>'
+               : gg <= 15 ? '<span class="badge gc-alert">🔥 '+gg+'gg rimasti</span>'
+               : '<span class="badge gc">⏳ entro '+gg+'gg</span>';
+      } else { ratCol = '<span class="badge gc">⏳ da ratificare</span>'; }
+    }
+
+    let revCol = '<span class="ct-dash">—</span>';
+    if(a.verbN){ revCol = '<span class="ct-num">n. '+esc(a.verbN)+'</span> <span class="ct-date">'+fmtDate(a.verbData)+'</span>'; }
+
+    let esitoCol = '<span class="ct-dash">—</span>';
+    if(esito){
+      const colors = {fav:'#059669',rilievi:'#d97706',neg:'#dc2626'};
+      esitoCol = '<span class="esito-dot" style="color:'+colors[esito.cls]+'">'+esito.icon+' '+esito.label+'</span>';
+    }
+
+    const clickAction = showEnte
+      ? 'goToAtto('+a.enteId+',\''+a.anno+'\','+a.id+')'
+      : 'setView(\'cards\');setTimeout(()=>{const c=document.getElementById(\'card-'+a.id+'\');if(c){c.classList.add(\'open\');c.scrollIntoView({behavior:\'smooth\',block:\'center\'});}},50)';
+
+    rows += '<tr onclick="'+clickAction+'">'
+      + '<td style="font-size:16px;text-align:center">'+cat.icon+'</td>'
+      + (showEnte ? '<td class="ct-ente">'+esc(enteName(a.enteId))+'<div class="ct-date">'+a.anno+'</div></td>' : '')
+      + '<td class="ct-atto">'+esc(a.oggetto)+'<div class="ct-date" style="color:'+cat.color+';font-weight:700;font-size:9px;text-transform:uppercase">'+cat.label+'</div></td>'
+      + '<td>'+delCol+'</td>'
+      + '<td>'+ratCol+'</td>'
+      + '<td>'+revCol+'</td>'
+      + '<td>'+esitoCol+'</td>'
+      + '</tr>';
+  });
+
+  return '<div class="compact-wrap"><table class="compact-table">'
+    + '<thead><tr><th></th>'+(showEnte?'<th>Ente</th>':'')+'<th>Atto</th><th>Delibera</th><th>Ratifica CC</th><th>Verbale Revisore</th><th>Esito Parere</th></tr></thead>'
+    + '<tbody>'+rows+'</tbody></table></div>'
+    + '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:right">💡 Clicca su una riga per aprire il dettaglio</div>';
+}
+
+// Naviga dall'elenco globale al dettaglio del singolo atto
+function goToAtto(enteId, anno, attoId){
+  kpiFilter = null;
+  document.getElementById('selEnte').value = enteId;
+  document.getElementById('selAnno').value = anno;
+  viewMode = 'cards';
+  render();
+  setTimeout(() => {
+    const c = document.getElementById('card-'+attoId);
+    if(c){ c.classList.add('open'); c.scrollIntoView({behavior:'smooth', block:'center'}); }
+  }, 50);
+}
+
+// ---------- VISTA DETTAGLIO (card) ----------
+function renderCards(atti){
+  let html = '';
+  atti.forEach(a => {
+    const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
+    const esito = ESITI[a.esito];
+    const pending = !a.delN;
+    const gg = giorniRatifica(a);
+
+    let badges = '';
+    if(pending){ badges += '<span class="badge pending">⏳ Da approvare</span>'; }
+    else if(a.isGC){ badges += '<span class="badge gc">🔶 Delibera GC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
+    else{ badges += '<span class="badge delibera">Delibera CC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
+
+    if(a.isGC && a.ratN){ badges += '<span class="badge fav">✅ Ratificata CC n. '+esc(a.ratN)+' del '+fmtDate(a.ratData)+'</span>'; }
+    else if(gg !== null){
+      badges += gg < 0 ? '<span class="badge gc-alert">⛔ RATIFICA SCADUTA da '+Math.abs(gg)+'gg</span>'
+              : gg <= 15 ? '<span class="badge gc-alert">🔥 Ratifica entro '+gg+'gg</span>'
+              : '<span class="badge gc">⏳ Ratifica entro '+gg+'gg</span>';
+    }
+
+    if(a.verbN && esito){ badges += '<span class="badge '+esito.cls+'">'+esito.icon+' Verbale n. '+esc(a.verbN)+' del '+fmtDate(a.verbData)+'</span>'; }
+
+    let gcBox = '';
+    if(a.isGC){
+      let ratContent;
+      if(a.ratN){ ratContent = '<div class="detail-val">Ratificata con Delibera CC n. '+esc(a.ratN)+'</div><div class="detail-sub">Data: '+fmtDate(a.ratData)+'</div>'; }
+      else if(gg !== null && gg < 0){ ratContent = '<div class="detail-val" style="color:#dc2626">⛔ Termine ratifica SCADUTO da '+Math.abs(gg)+' giorni</div><div class="detail-sub">La delibera GC decade se non ratificata nei 60 gg — verificare situazione</div>'; }
+      else if(gg !== null){ ratContent = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare — restano '+gg+' giorni</div><div class="detail-sub">Termine: 60 gg dalla delibera GC (art. 175 c.4 TUEL)</div>'; }
+      else { ratContent = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare in CC</div>'; }
+      gcBox = '<div class="detail-box arancio"><div class="detail-label">🔶 Variazione urgente GC — Ratifica Consiglio (art. 175 c.4 TUEL)</div>'+ratContent+'</div>';
+    }
+
+    html += '<div class="atto-card" id="card-'+a.id+'">'
+      + '<div class="atto-head" style="border-left-color:'+cat.color+'" onclick="toggleCard('+a.id+')">'
+      + '<div class="cat-icon" style="background:'+cat.color+'15">'+cat.icon+'</div>'
+      + '<div class="atto-body">'
+      + '<div class="cat-label" style="color:'+cat.color+'">'+cat.label+'</div>'
+      + '<div class="atto-title">'+esc(a.oggetto)+'</div>'
+      + '<div class="badge-row">'+badges+'</div>'
+      + '</div><span class="chevron">▼</span></div>'
+      + '<div class="atto-detail"><div class="detail-grid">'
+      + '<div class="detail-box blu"><div class="detail-label">'+(a.isGC?'🔶 Delibera Giunta Comunale (urgente)':'📜 Delibera Consiglio Comunale')+'</div>'
+      + (pending ? '<div class="detail-val" style="color:#c2410c">⏳ In attesa di approvazione</div>'
+                 : '<div class="detail-val">Delibera n. '+esc(a.delN)+'</div><div class="detail-sub">Data: '+fmtDate(a.delData)+'</div>')
+      + '</div>'
+      + '<div class="detail-box verde"><div class="detail-label">📝 Parere Organo di Revisione</div>'
+      + (a.verbN ? '<div class="detail-val">Verbale n. '+esc(a.verbN)+'</div><div class="detail-sub">Data: '+fmtDate(a.verbData)+'</div>'
+                   + (esito ? '<div style="margin-top:6px"><span class="badge '+esito.cls+'">'+esito.icon+' '+esito.label+'</span></div>' : '')
+                 : '<div class="detail-val" style="color:#9ca0ad">Non ancora emesso</div>')
+      + '</div>'
+      + gcBox
+      + '</div>'
+      + (a.note ? '<div class="note-box">📌 '+esc(a.note)+'</div>' : '')
+      + '<div class="action-row">'
+      + '<button class="act-edit" onclick="event.stopPropagation();openEdit('+a.id+')">✏️ Modifica</button>'
+      + '<button class="act-del" onclick="event.stopPropagation();delAtto('+a.id+')">🗑️ Elimina</button>'
+      + '</div></div></div>';
+  });
+  return html;
+}
+
+function toggleCard(id){
+  document.getElementById('card-'+id).classList.toggle('open');
+}
+
+// ============================================================
+// MODAL / CRUD
+// ============================================================
+function renderEsitoPicker(){
+  const opts = [
+    {k:'',l:'Non emesso',cls:'sel-none',ic:'—'},
+    {k:'favorevole',l:'Favorevole',cls:'sel-fav',ic:'✅'},
+    {k:'favorevole_con_rilievi',l:'Con rilievi',cls:'sel-ril',ic:'⚠️'},
+    {k:'negativo',l:'Negativo',cls:'sel-neg',ic:'❌'}
+  ];
+  document.getElementById('esitoPicker').innerHTML = opts.map(o =>
+    '<div class="esito-opt '+(selectedEsito===o.k?o.cls:'')+'" onclick="setEsito(\''+o.k+'\')">'+o.ic+' '+o.l+'</div>'
+  ).join('');
+}
+function setEsito(k){ selectedEsito = k; renderEsitoPicker(); }
+
+function toggleGC(){
+  const isGC = document.getElementById('f-isGC').checked;
+  document.getElementById('gcFields').classList.toggle('show', isGC);
+  document.getElementById('sepDelLabel').textContent = isGC ? '🔶 Delibera Giunta Comunale (urgente)' : '📜 Delibera Consiglio Comunale';
+  document.getElementById('delNLabel').textContent = isGC ? 'N° Delibera GC' : 'N° Delibera';
+}
+
+function autoOggetto(){
+  const cat = document.getElementById('f-cat').value;
+  const anno = document.getElementById('selAnno').value;
+  const ogg = document.getElementById('f-oggetto');
+  const isAuto = !ogg.value || Object.values(CATEGORIE).some(c => ogg.value.startsWith(c.label));
+  if(isAuto){ ogg.value = CATEGORIE[cat].label + ' ' + anno; }
+}
+
+function openAdd(){
+  const enteId = parseInt(document.getElementById('selEnte').value);
+  if(!enteId){ alert('Seleziona prima un ente'); return; }
+  editId = null;
+  selectedEsito = '';
+  document.getElementById('modalTitle').textContent = '➕ Nuovo Atto Deliberativo';
+  const ente = ENTI.find(e => e.id === enteId);
+  const anno = document.getElementById('selAnno').value;
+  document.getElementById('ctxBox').innerHTML = '<strong>🏛️ '+esc(ente.nome)+'</strong> — Anno <strong>'+anno+'</strong>';
+  document.getElementById('f-cat').value = 'bilancio';
+  document.getElementById('f-oggetto').value = CATEGORIE.bilancio.label + ' ' + anno;
+  document.getElementById('f-isGC').checked = false;
+  toggleGC();
+  document.getElementById('f-delN').value = '';
+  document.getElementById('f-delData').value = '';
+  document.getElementById('f-ratN').value = '';
+  document.getElementById('f-ratData').value = '';
+  document.getElementById('f-verbN').value = '';
+  document.getElementById('f-verbData').value = '';
+  document.getElementById('f-note').value = '';
+  renderEsitoPicker();
+  document.getElementById('mo').classList.add('show');
+}
+
+function openEdit(id){
+  const a = ATTI.find(x => x.id === id);
+  if(!a) return;
+  editId = id;
+  selectedEsito = a.esito || '';
+  document.getElementById('modalTitle').textContent = '✏️ Modifica Atto';
+  const ente = ENTI.find(e => e.id === a.enteId);
+  document.getElementById('ctxBox').innerHTML = '<strong>🏛️ '+esc(ente.nome)+'</strong> — Anno <strong>'+a.anno+'</strong>';
+  document.getElementById('f-cat').value = a.cat;
+  document.getElementById('f-oggetto').value = a.oggetto;
+  document.getElementById('f-isGC').checked = !!a.isGC;
+  toggleGC();
+  document.getElementById('f-delN').value = a.delN;
+  document.getElementById('f-delData').value = a.delData;
+  document.getElementById('f-ratN').value = a.ratN || '';
+  document.getElementById('f-ratData').value = a.ratData || '';
+  document.getElementById('f-verbN').value = a.verbN;
+  document.getElementById('f-verbData').value = a.verbData;
+  document.getElementById('f-note').value = a.note;
+  renderEsitoPicker();
+  document.getElementById('mo').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('mo').classList.remove('show'); }
+
+function saveAtto(){
+  const oggetto = document.getElementById('f-oggetto').value.trim();
+  if(!oggetto){ alert('Inserisci l\'oggetto dell\'atto'); return; }
+  const data = {
+    cat: document.getElementById('f-cat').value,
+    oggetto: oggetto,
+    isGC: document.getElementById('f-isGC').checked,
+    delN: document.getElementById('f-delN').value.trim(),
+    delData: document.getElementById('f-delData').value,
+    ratN: document.getElementById('f-ratN').value.trim(),
+    ratData: document.getElementById('f-ratData').value,
+    verbN: document.getElementById('f-verbN').value.trim(),
+    verbData: document.getElementById('f-verbData').value,
+    esito: selectedEsito,
+    note: document.getElementById('f-note').value.trim()
+  };
+  if(editId){
+    const a = ATTI.find(x => x.id === editId);
+    if(a) Object.assign(a, data);
+  } else {
+    ATTI.push({
+      id: nextId++,
+      enteId: parseInt(document.getElementById('selEnte').value),
+      anno: document.getElementById('selAnno').value,
+      ...data
+    });
+  }
+  closeModal();
+  render();
+}
+
+function delAtto(id){
+  const a = ATTI.find(x => x.id === id);
+  if(!a) return;
+  if(!confirm('Eliminare questo atto?\n\n' + a.oggetto)) return;
+  ATTI = ATTI.filter(x => x.id !== id);
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
