@@ -162,6 +162,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .org-opt{flex:1;padding:10px 12px;border-radius:var(--radius);border:2px solid var(--border);background:white;cursor:pointer;font-size:12px;font-weight:600;text-align:center;transition:all 0.15s;color:var(--text-secondary);}
 .org-opt.sel-cc{border-color:var(--primary);background:var(--primary-light);color:var(--primary);font-weight:700;}
 .org-opt.sel-gc{border-color:var(--gc);background:var(--gc-light);color:var(--gc);font-weight:700;}
+.org-opt.sel-det{border-color:#475569;background:#f1f5f9;color:#334155;font-weight:700;}
+.badge.det{background:#e2e8f0;color:#334155;}
 /* v2: doppio passaggio schema + PFF */
 .gc-toggle.cc-style{background:var(--primary-light);border-color:#bfdbfe;}
 .gc-toggle.cc-style input{accent-color:var(--primary);}
@@ -339,6 +341,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="organo-picker">
           <div class="org-opt" id="orgCC" onclick="setOrgano('CC')">📜 Consiglio Comunale</div>
           <div class="org-opt" id="orgGC" onclick="setOrgano('GC')">🔶 Giunta Comunale</div>
+          <div class="org-opt" id="orgDET" onclick="setOrgano('DET')">🖊️ Determina Resp.</div>
         </div>
       </div>
       <label class="gc-toggle" id="ratToggleBox" style="display:none">
@@ -464,7 +467,11 @@ const CATEGORIE = {
   salvaguardia:{label:'Salvaguardia Equilibri',icon:'⚖️',color:'#d97706'},
   assestamento:{label:'Assestamento Generale',icon:'🔄',color:'#7c3aed'},
   dup:{label:'DUP',icon:'📄',color:'#0891b2'},
-  variazioni:{label:'Variazioni di Bilancio',icon:'📝',color:'#dc2626'},
+  variazione_cc:{label:'Variazione di Bilancio (CC)',icon:'📝',color:'#dc2626'},
+  variazione_urgente:{label:'Variazione urgente di Bilancio (GC)',icon:'⚡',color:'#ea580c'},
+  variazione_cassa:{label:'Variazione di Cassa (GC)',icon:'💶',color:'#0d9488'},
+  variazione_determina:{label:'Variazione con Determina Responsabile',icon:'🖊️',color:'#64748b'},
+  variazioni:{label:'Variazioni di Bilancio (generica)',icon:'📝',color:'#dc2626'},
   tari:{label:'Tariffe TARI',icon:'🗑️',color:'#b45309'},
   imu:{label:'Aliquote IMU',icon:'🏠',color:'#6d28d9'},
   conto_annuale:{label:'Conto Annuale Personale',icon:'👥',color:'#0d9488'},
@@ -622,7 +629,7 @@ async function loadData(){
     const raw = await getListItems(LIST_FASCICOLO);
     ATTI = raw.map(r => {
       const legacyGC = boolSP(r.OrganoGC);
-      const organo = r.Organo === 'GC' || r.Organo === 'CC' ? r.Organo : (legacyGC ? 'GC' : 'CC');
+      const organo = ['CC','GC','DET'].includes(r.Organo) ? r.Organo : (legacyGC ? 'GC' : 'CC');
       const richiedeRat = r.RichiedeRatifica !== undefined && r.RichiedeRatifica !== null
         ? boolSP(r.RichiedeRatifica)
         : legacyGC; // retrocompatibilità v1: OrganoGC=true era la variazione urgente da ratificare
@@ -822,7 +829,8 @@ function renderCompact(atti, showEnte){
     let delCol;
     if(!a.delN){ delCol = '<span class="badge pending">⏳ Da approvare</span>'; }
     else{
-      delCol = '<span class="badge '+(a.organo==='GC'?'gc':'delibera')+'">'+a.organo+'</span> <span class="ct-num">n. '+esc(a.delN)+'</span> <span class="ct-date">'+fmtDate(a.delData)+'</span>';
+      const orgCls = a.organo === 'GC' ? 'gc' : (a.organo === 'DET' ? 'det' : 'delibera');
+      delCol = '<span class="badge '+orgCls+'">'+a.organo+'</span> <span class="ct-num">n. '+esc(a.delN)+'</span> <span class="ct-date">'+fmtDate(a.delData)+'</span>';
     }
     let ratCol = '<span class="ct-dash">—</span>';
     if(a.schemaN){
@@ -892,6 +900,7 @@ function renderCards(atti){
     let badges = '';
     if(pending){ badges += '<span class="badge pending">⏳ Da approvare</span>'; }
     else if(a.organo === 'GC'){ badges += '<span class="badge gc">🔶 Delibera GC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
+    else if(a.organo === 'DET'){ badges += '<span class="badge det">🖊️ Determina n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
     else{ badges += '<span class="badge delibera">Delibera CC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
     if(a.schemaN){ badges += '<span class="badge schema">🔁 Schema GC n. '+esc(a.schemaN)+' del '+fmtDate(a.schemaData)+'</span>'; }
     if(a.organo === 'GC' && a.richiedeRat && a.ratN){ badges += '<span class="badge fav">✅ Ratificata CC n. '+esc(a.ratN)+' del '+fmtDate(a.ratData)+'</span>'; }
@@ -953,9 +962,9 @@ function renderCards(atti){
       + '<div class="badge-row">'+badges+'</div>'
       + '</div><span class="chevron">▼</span></div>'
       + '<div class="atto-detail"><div class="detail-grid">'
-      + '<div class="detail-box blu"><div class="detail-label">'+(a.organo==='GC'?'🔶 Delibera Giunta Comunale':'📜 Delibera Consiglio Comunale')+'</div>'
+      + '<div class="detail-box blu"><div class="detail-label">'+(a.organo==='GC'?'🔶 Delibera Giunta Comunale':(a.organo==='DET'?'🖊️ Determina del Responsabile del Servizio':'📜 Delibera Consiglio Comunale'))+'</div>'
       + (pending ? '<div class="detail-val" style="color:#c2410c">⏳ In attesa di approvazione</div>'
-                 : '<div class="detail-val">Delibera '+a.organo+' n. '+esc(a.delN)+'</div><div class="detail-sub">Data: '+fmtDate(a.delData)+'</div>')
+                 : '<div class="detail-val">'+(a.organo==='DET'?'Determina':'Delibera '+a.organo)+' n. '+esc(a.delN)+'</div><div class="detail-sub">Data: '+fmtDate(a.delData)+'</div>')
       + '</div>'
       + '<div class="detail-box verde"><div class="detail-label">📝 Parere Organo di Revisione</div>'
       + (a.verbN ? '<div class="detail-val">Verbale n. '+esc(a.verbN)+'</div><div class="detail-sub">Data: '+fmtDate(a.verbData)+'</div>'
@@ -994,15 +1003,16 @@ function setOrgano(org){
   selectedOrgano = org;
   document.getElementById('orgCC').className = 'org-opt' + (org === 'CC' ? ' sel-cc' : '');
   document.getElementById('orgGC').className = 'org-opt' + (org === 'GC' ? ' sel-gc' : '');
-  // Ratifica art.175 c.4 e Comunicazione art.176: solo per GC | Doppio passaggio schema: solo per CC
+  document.getElementById('orgDET').className = 'org-opt' + (org === 'DET' ? ' sel-det' : '');
+  // Ratifica art.175 c.4 e Comunicazione art.176: solo GC | Doppio passaggio schema: solo CC | Determina: nessun adempimento
   document.getElementById('ratToggleBox').style.display = org === 'GC' ? 'flex' : 'none';
   document.getElementById('comToggleBox').style.display = org === 'GC' ? 'flex' : 'none';
   document.getElementById('schemaToggleBox').style.display = org === 'CC' ? 'flex' : 'none';
-  if(org === 'CC'){ document.getElementById('f-ratifica').checked = false; document.getElementById('f-comunica').checked = false; }
-  else{ document.getElementById('f-schema').checked = false; }
+  if(org !== 'GC'){ document.getElementById('f-ratifica').checked = false; document.getElementById('f-comunica').checked = false; }
+  if(org !== 'CC'){ document.getElementById('f-schema').checked = false; }
   toggleRatifica(); toggleSchema(); toggleComunica();
-  document.getElementById('sepDelLabel').textContent = org === 'GC' ? '🔶 Delibera Giunta Comunale' : '📜 Delibera Consiglio Comunale';
-  document.getElementById('delNLabel').textContent = org === 'GC' ? 'N° Delibera GC' : 'N° Delibera CC';
+  document.getElementById('sepDelLabel').textContent = org === 'GC' ? '🔶 Delibera Giunta Comunale' : (org === 'DET' ? '🖊️ Determina del Responsabile del Servizio' : '📜 Delibera Consiglio Comunale');
+  document.getElementById('delNLabel').textContent = org === 'GC' ? 'N° Delibera GC' : (org === 'DET' ? 'N° Determina' : 'N° Delibera CC');
 }
 
 function toggleComunica(){
@@ -1054,6 +1064,25 @@ async function catChanged(){
     setOrgano('GC');
     document.getElementById('f-comunica').checked = true;
     toggleComunica();
+  }
+  // Variazioni: automatismi per organo e adempimenti
+  if(!editId){
+    if(sel.value === 'variazione_cc'){
+      setOrgano('CC');
+    } else if(sel.value === 'variazione_urgente'){
+      // GC urgente da ratificare in CC entro 60 gg — art. 175 c.4 TUEL
+      setOrgano('GC');
+      document.getElementById('f-ratifica').checked = true;
+      toggleRatifica();
+    } else if(sel.value === 'variazione_cassa' || catLabel.includes('variazione di cassa')){
+      // GC da comunicare al CC — art. 175 c.5-bis lett. d) TUEL
+      setOrgano('GC');
+      document.getElementById('f-comunica').checked = true;
+      toggleComunica();
+    } else if(sel.value === 'variazione_determina' || catLabel.includes('determina')){
+      // Variazione di competenza del responsabile — art. 175 c.5-quater TUEL
+      setOrgano('DET');
+    }
   }
   autoOggetto();
 }
@@ -1258,7 +1287,8 @@ function doPrint(){
   let tr = rows.map(a => {
     const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
     const esito = ESITI[a.esito];
-    const del = a.delN ? (a.organo+' n. '+a.delN+' del '+fmtDate(a.delData)) : 'Da approvare';
+    const orgLabel = a.organo === 'DET' ? 'Det. Resp.' : a.organo;
+    const del = a.delN ? (orgLabel+' n. '+a.delN+' del '+fmtDate(a.delData)) : 'Da approvare';
     const schema = a.schemaN ? ('GC n. '+a.schemaN+' del '+fmtDate(a.schemaData)) : '—';
     let rat = a.ratN ? ('CC n. '+a.ratN+' del '+fmtDate(a.ratData)) : (a.richiedeRat ? 'da ratificare' : '—');
     if(a.richiedeCom){
