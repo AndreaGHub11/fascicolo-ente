@@ -183,6 +183,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .badge.com-ok{background:var(--accent-light);color:var(--accent);}
 .badge.com-alert{background:var(--danger-light);color:var(--danger);animation:pulse 1.5s infinite;}
 .detail-box.viola{border-left:3px solid var(--accent);}
+.gc-toggle.cdc-style{background:#fef2f2;border-color:#fecaca;}
+.gc-toggle.cdc-style input{accent-color:#b91c1c;}
+.gc-toggle.cdc-style .gc-lab{color:#b91c1c;}
+.gc-toggle.cdc-style .gc-sub{color:#7f1d1d;}
+.gc-fields.cdc-fields{background:#fef2f2;border-color:#fca5a5;}
+.badge.cdc-ok{background:#fee2e2;color:#b91c1c;}
+.badge.cdc-alert{background:#b91c1c;color:#fff;animation:pulse 1.5s infinite;}
+.detail-box.rosso{border-left:3px solid #b91c1c;}
+.kpi.red{border-left-color:#b91c1c;}.kpi.red .v{color:#b91c1c;}.kpi.red.active{outline-color:#b91c1c;background:#fef2f2;}
+.exp-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.exp-preset{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.exp-preset:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
 .badge.pff-ok{background:var(--info-light);color:#0e7490;}
 .badge.pff-alert{background:var(--danger-light);color:var(--danger);}
 .badge.schema{background:#e0e7ff;color:#4338ca;}
@@ -243,7 +255,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="main-content">
   <div class="search-panel">
     <h2 class="section-title">🏛️ Fascicolo Ente</h2>
-    <div class="section-sub">Registro delibere CC/GC e pareri organo di revisione — dati su SharePoint</div>
+    <div class="section-sub">Registro delibere, determine e pareri dell'organo di revisione</div>
     <div class="search-row">
       <div class="field" style="min-width:260px;flex:2">
         <label>Ente</label>
@@ -262,7 +274,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </div>
 
-  <div id="loadingBox" class="loading" style="display:none;"><div class="spinner"></div><p>Caricamento dati da SharePoint...</p></div>
+  <div id="loadingBox" class="loading" style="display:none;"><div class="spinner"></div><p>Caricamento dati...</p></div>
   <div id="kpiArea"></div>
   <div id="filterBannerArea"></div>
   <div id="toolbarArea"></div>
@@ -301,12 +313,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
       <div class="form-group">
         <label>Tipi atto da includere (flagga solo gli argomenti che ti servono, es. Bilancio + Variazioni)</label>
+        <div class="exp-presets">
+          <button class="exp-preset" onclick="expPreset('variazioni')">⚡ Tutte le variazioni</button>
+          <button class="exp-preset" onclick="expPreset('bilancio')">🏦 Bilancio e Rendiconto</button>
+          <button class="exp-preset" onclick="expPreset('tributi')">🧾 Tributi (IMU/TARI)</button>
+          <button class="exp-preset" onclick="expPreset('dfb')">⚖️ DFB</button>
+        </div>
         <div class="exp-cats" id="expCats"></div>
       </div>
     </div>
     <div class="form-actions">
       <button class="btn" onclick="closePrintModal()">Annulla</button>
-      <button class="btn" onclick="doExportCSV()">📊 Esporta CSV</button>
+      <button class="btn" onclick="doExportCSV()">📊 CSV</button>
+      <button class="btn" onclick="doTestoRelazione()">📄 Testo relazione</button>
       <button class="btn btn-primary" onclick="doPrint()">🖨️ Stampa</button>
     </div>
   </div>
@@ -393,6 +412,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         </div>
         <div class="hint" style="margin:8px 0 0">Lascia vuota la data se non ancora comunicato: l'atto sarà segnalato come 📣 da comunicare</div>
       </div>
+      <label class="gc-toggle cdc-style" id="cdcToggleBox">
+        <input type="checkbox" id="f-cdc" onchange="toggleCdC()">
+        <div>
+          <div class="gc-lab">⚖️ Da comunicare alla Corte dei Conti</div>
+          <div class="gc-sub">Procura regionale + portale ConTe — es. riconoscimento DFB (art. 23 c.5 L. 289/2002)</div>
+        </div>
+      </label>
+      <div class="gc-fields cdc-fields" id="cdcFields">
+        <div style="font-size:11px;font-weight:700;color:#b91c1c;margin-bottom:10px">⚖️ Trasmissioni alla Corte dei Conti</div>
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label>Data invio Procura CdC</label><input type="date" id="f-cdcProc"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Data caricamento portale ConTe</label><input type="date" id="f-cdcConte"></div>
+        </div>
+        <div class="hint" style="margin:8px 0 0">L'adempimento risulta completato solo con entrambe le date — finché ne manca una l'atto è segnalato ⚖️ pendente</div>
+      </div>
       <label class="gc-toggle pff-style" id="pffToggleBox">
         <input type="checkbox" id="f-pff" onchange="togglePFF()">
         <div>
@@ -472,6 +506,7 @@ const CATEGORIE = {
   variazione_cassa:{label:'Variazione di Cassa (GC)',icon:'💶',color:'#0d9488'},
   variazione_determina:{label:'Variazione con Determina Responsabile',icon:'🖊️',color:'#64748b'},
   variazioni:{label:'Variazioni di Bilancio (generica)',icon:'📝',color:'#dc2626'},
+  dfb:{label:'Debiti Fuori Bilancio (DFB)',icon:'⚖️',color:'#b91c1c'},
   tari:{label:'Tariffe TARI',icon:'🗑️',color:'#b45309'},
   imu:{label:'Aliquote IMU',icon:'🏠',color:'#6d28d9'},
   conto_annuale:{label:'Conto Annuale Personale',icon:'👥',color:'#0d9488'},
@@ -511,6 +546,9 @@ const pffPendente = a => a.soggettoPFF && a.delN && !a.pffData;
 
 // Comunicazione al CC pendente (art. 176 TUEL): delibera GC approvata, comunicazione richiesta, nessuna data
 const comPendente = a => a.organo === 'GC' && a.richiedeCom && a.delN && !a.comData;
+
+// Corte dei Conti pendente: atto approvato ma manca l'invio alla Procura O il caricamento su ConTe
+const cdcPendente = a => a.richiedeCdC && a.delN && (!a.cdcProcData || !a.cdcConteData);
 
 // ============================================================
 // AUTH
@@ -644,6 +682,9 @@ async function loadData(){
         richiedeCom: organo === 'GC' && boolSP(r.RichiedeComunicazioneCC),
         comN: r.ComunicazioneN || '',
         comData: toDateOnly(r.ComunicazioneData),
+        richiedeCdC: boolSP(r.RichiedeCdC),
+        cdcProcData: toDateOnly(r.CdCProcuraData),
+        cdcConteData: toDateOnly(r.CdCConteData),
         schemaN: r.SchemaGCN || '',
         schemaData: toDateOnly(r.SchemaGCData),
         delN: r.DeliberaN || '',
@@ -737,11 +778,13 @@ function render(){
   const gAttesa = attiAnno.filter(a => !a.delN).length;
   const gRatifiche = ATTI.filter(a => giorniRatifica(a) !== null).length;
   const gComunicazioni = ATTI.filter(a => comPendente(a)).length;
+  const gCdC = ATTI.filter(a => cdcPendente(a)).length;
 
   let kpiHtml = '<div class="kpi-title">🌍 Panoramica generale — tutti gli enti</div>'
     + '<div class="kpi-grid">'
     + '<div class="kpi gc '+(kpiFilter==='ratifiche'?'active':'')+'" onclick="setKpiFilter(\'ratifiche\')"><div class="v">'+gRatifiche+'</div><div class="l">🔶 Ratifiche GC pendenti</div><div class="hint-click">👆 clicca per urgenze</div></div>'
     + '<div class="kpi purple '+(kpiFilter==='comunicazioni'?'active':'')+'" onclick="setKpiFilter(\'comunicazioni\')"><div class="v">'+gComunicazioni+'</div><div class="l">📣 Comunicazioni CC pendenti</div><div class="hint-click">👆 clicca per elenco</div></div>'
+    + '<div class="kpi red '+(kpiFilter==='cdc'?'active':'')+'" onclick="setKpiFilter(\'cdc\')"><div class="v">'+gCdC+'</div><div class="l">⚖️ Corte dei Conti pendenti</div><div class="hint-click">👆 clicca per elenco</div></div>'
     + '<div class="kpi '+(kpiFilter==='attesa'?'active':'')+'" onclick="setKpiFilter(\'attesa\')"><div class="v">'+gAttesa+'</div><div class="l">In attesa approvazione ('+anno+')</div><div class="hint-click">👆 clicca per elenco</div></div>'
     + '</div>';
 
@@ -771,6 +814,10 @@ function render(){
     } else if(kpiFilter === 'comunicazioni'){
       filtered = ATTI.filter(a => comPendente(a)).sort((x,y) => (x.delData||'').localeCompare(y.delData||''));
       title = '📣 Comunicazioni al CC pendenti — tutti gli enti, dalla più datata (art. 176 TUEL)';
+      bannerCls = 'orange-style';
+    } else if(kpiFilter === 'cdc'){
+      filtered = ATTI.filter(a => cdcPendente(a)).sort((x,y) => (x.delData||'').localeCompare(y.delData||''));
+      title = '⚖️ Trasmissioni alla Corte dei Conti pendenti — Procura e/o portale ConTe, dalla più datata';
       bannerCls = 'orange-style';
     } else {
       filtered = attiAnno.filter(a => !a.delN);
@@ -856,11 +903,16 @@ function renderCompact(atti, showEnte){
       const colors = {fav:'#059669',rilievi:'#d97706',neg:'#dc2626'};
       esitoCol = '<span class="esito-dot" style="color:'+colors[esito.cls]+'">'+esito.icon+' '+esito.label+'</span>';
     }
-    let pffCol = '<span class="ct-dash">—</span>';
+    let pffCol = '';
     if(a.soggettoPFF){
-      pffCol = a.pffData ? '<span class="badge pff-ok">📤 '+fmtDate(a.pffData)+'</span>'
+      pffCol += a.pffData ? '<span class="badge pff-ok">📤 '+fmtDate(a.pffData)+'</span>'
              : (a.delN ? '<span class="badge pff-alert">⚠️ Da trasmettere</span>' : '<span class="badge pending">⏳ dopo approvazione</span>');
     }
+    if(a.richiedeCdC){
+      pffCol += (pffCol ? ' ' : '') + (a.cdcProcData && a.cdcConteData ? '<span class="badge cdc-ok">⚖️ CdC ok</span>'
+             : (a.delN ? '<span class="badge cdc-alert">⚖️ CdC pendente</span>' : '<span class="badge pending">⚖️ dopo approvazione</span>'));
+    }
+    if(!pffCol) pffCol = '<span class="ct-dash">—</span>';
     const clickAction = showEnte
       ? "goToAtto('"+esc(a.ente).replace(/'/g,"\\'")+"','"+a.anno+"','"+a.id+"')"
       : "setView('cards');setTimeout(()=>{const c=document.getElementById('card-"+a.id+"');if(c){c.classList.add('open');c.scrollIntoView({behavior:'smooth',block:'center'});}},50)";
@@ -872,7 +924,7 @@ function renderCompact(atti, showEnte){
       + '<td>'+delCol+'</td><td>'+ratCol+'</td><td>'+revCol+'</td><td>'+esitoCol+'</td><td>'+pffCol+'</td></tr>';
   });
   return '<div class="compact-wrap"><table class="compact-table">'
-    + '<thead><tr><th></th>'+(showEnte?'<th>Ente</th>':'')+'<th>Atto</th><th>Delibera</th><th>Schema / Ratifica</th><th>Verbale Revisore</th><th>Esito Parere</th><th>PFF</th></tr></thead>'
+    + '<thead><tr><th></th>'+(showEnte?'<th>Ente</th>':'')+'<th>Atto</th><th>Delibera</th><th>Schema / Ratifica</th><th>Verbale Revisore</th><th>Esito Parere</th><th>PFF / CdC</th></tr></thead>'
     + '<tbody>'+rows+'</tbody></table></div>'
     + '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:right">💡 Clicca su una riga per aprire il dettaglio</div>';
 }
@@ -917,6 +969,21 @@ function renderCards(atti){
     if(a.soggettoPFF){
       badges += a.pffData ? '<span class="badge pff-ok">📤 PFF trasmessa il '+fmtDate(a.pffData)+'</span>'
               : (a.delN ? '<span class="badge pff-alert">⚠️ PFF da trasmettere</span>' : '<span class="badge pff-ok">📤 Soggetta a PFF</span>');
+    }
+    if(a.richiedeCdC){
+      badges += (a.cdcProcData && a.cdcConteData) ? '<span class="badge cdc-ok">⚖️ CdC completata</span>'
+              : (a.delN ? '<span class="badge cdc-alert">⚖️ CdC DA TRASMETTERE</span>' : '<span class="badge cdc-ok">⚖️ Soggetta a CdC</span>');
+    }
+
+    let cdcBox = '';
+    if(a.richiedeCdC){
+      const pr = a.cdcProcData ? '✅ Procura: '+fmtDate(a.cdcProcData) : '❌ Procura: da inviare';
+      const ct = a.cdcConteData ? '✅ ConTe: '+fmtDate(a.cdcConteData) : '❌ ConTe: da caricare';
+      const stato = (a.cdcProcData && a.cdcConteData)
+        ? '<div class="detail-val" style="color:#059669">Trasmissione completata</div>'
+        : (a.delN ? '<div class="detail-val" style="color:#b91c1c">⚖️ Trasmissione PENDENTE</div>' : '<div class="detail-val" style="color:#9ca0ad">In attesa di approvazione dell\'atto</div>');
+      cdcBox = '<div class="detail-box rosso"><div class="detail-label">⚖️ Corte dei Conti — Procura + portale ConTe (art. 23 c.5 L. 289/2002)</div>'
+        + stato + '<div class="detail-sub">'+pr+' &nbsp;·&nbsp; '+ct+'</div></div>';
     }
 
     let schemaBox = '';
@@ -971,7 +1038,7 @@ function renderCards(atti){
                    + (esito ? '<div style="margin-top:6px"><span class="badge '+esito.cls+'">'+esito.icon+' '+esito.label+'</span></div>' : '')
                  : '<div class="detail-val" style="color:#9ca0ad">Non ancora emesso</div>')
       + '</div>'
-      + schemaBox + gcBox + comBox + pffBox + '</div>'
+      + schemaBox + gcBox + comBox + cdcBox + pffBox + '</div>'
       + (a.note ? '<div class="note-box">📌 '+esc(a.note)+'</div>' : '')
       + '<div class="action-row">'
       + '<button class="act-edit" onclick="event.stopPropagation();openEdit(\''+a.id+'\')">✏️ Modifica</button>'
@@ -1034,6 +1101,10 @@ function togglePFF(){
   document.getElementById('pffFields').classList.toggle('show', document.getElementById('f-pff').checked);
 }
 
+function toggleCdC(){
+  document.getElementById('cdcFields').classList.toggle('show', document.getElementById('f-cdc').checked);
+}
+
 async function catChanged(){
   const sel = document.getElementById('f-cat');
   if(sel.value === '__new__'){
@@ -1082,6 +1153,11 @@ async function catChanged(){
     } else if(sel.value === 'variazione_determina' || catLabel.includes('determina')){
       // Variazione di competenza del responsabile — art. 175 c.5-quater TUEL
       setOrgano('DET');
+    } else if(sel.value === 'dfb' || catLabel.includes('debiti fuori bilancio') || catLabel.includes('dfb')){
+      // Riconoscimento DFB: CC + trasmissione Corte dei Conti (art. 23 c.5 L. 289/2002)
+      setOrgano('CC');
+      document.getElementById('f-cdc').checked = true;
+      toggleCdC();
     }
   }
   autoOggetto();
@@ -1123,9 +1199,10 @@ function openAdd(){
   document.getElementById('f-ratifica').checked = false;
   document.getElementById('f-schema').checked = false;
   document.getElementById('f-comunica').checked = false;
+  document.getElementById('f-cdc').checked = false;
   document.getElementById('f-pff').checked = false;
-  toggleRatifica(); toggleSchema(); toggleComunica(); togglePFF();
-  ['f-schemaN','f-schemaData','f-delN','f-delData','f-ratN','f-ratData','f-comN','f-comData','f-verbN','f-verbData','f-pffData','f-note'].forEach(id => document.getElementById(id).value = '');
+  toggleRatifica(); toggleSchema(); toggleComunica(); toggleCdC(); togglePFF();
+  ['f-schemaN','f-schemaData','f-delN','f-delData','f-ratN','f-ratData','f-comN','f-comData','f-cdcProc','f-cdcConte','f-verbN','f-verbData','f-pffData','f-note'].forEach(id => document.getElementById(id).value = '');
   renderEsitoPicker();
   document.getElementById('mo').classList.add('show');
 }
@@ -1152,6 +1229,10 @@ function openEdit(id){
   document.getElementById('f-ratData').value = a.ratData;
   document.getElementById('f-comN').value = a.comN;
   document.getElementById('f-comData').value = a.comData;
+  document.getElementById('f-cdc').checked = !!a.richiedeCdC;
+  toggleCdC();
+  document.getElementById('f-cdcProc').value = a.cdcProcData;
+  document.getElementById('f-cdcConte').value = a.cdcConteData;
   document.getElementById('f-verbN').value = a.verbN;
   document.getElementById('f-verbData').value = a.verbData;
   document.getElementById('f-pff').checked = !!a.soggettoPFF;
@@ -1192,6 +1273,9 @@ async function saveAtto(){
     RichiedeComunicazioneCC: isComCC,
     ComunicazioneN: isComCC ? document.getElementById('f-comN').value.trim() : '',
     ComunicazioneData: isComCC ? dOrNull(document.getElementById('f-comData').value) : null,
+    RichiedeCdC: document.getElementById('f-cdc').checked,
+    CdCProcuraData: document.getElementById('f-cdc').checked ? dOrNull(document.getElementById('f-cdcProc').value) : null,
+    CdCConteData: document.getElementById('f-cdc').checked ? dOrNull(document.getElementById('f-cdcConte').value) : null,
     VerbaleN: document.getElementById('f-verbN').value.trim(),
     VerbaleData: dOrNull(document.getElementById('f-verbData').value),
     EsitoRevisore: selectedEsito,
@@ -1261,6 +1345,21 @@ function openPrintModal(){
 function closePrintModal(){ document.getElementById('printMo').classList.remove('show'); }
 function expSelectAll(on){ document.querySelectorAll('.exp-cat-cb').forEach(cb => cb.checked = on); }
 
+function expPreset(tipo){
+  const match = (k, label) => {
+    const l = label.toLowerCase();
+    if(tipo === 'variazioni') return k.startsWith('variazione') || k === 'variazioni' || l.includes('variazione') || l.includes('prelievo') || l.includes('fondo di riserva');
+    if(tipo === 'bilancio') return ['bilancio','rendiconto','assestamento','salvaguardia'].includes(k) || l.includes('bilancio di previsione') || l.includes('rendiconto');
+    if(tipo === 'tributi') return ['imu','tari'].includes(k) || l.includes('imu') || l.includes('tari') || l.includes('tribut') || l.includes('aliquot');
+    if(tipo === 'dfb') return k === 'dfb' || l.includes('debiti fuori bilancio') || l.includes('dfb');
+    return false;
+  };
+  document.querySelectorAll('.exp-cat-cb').forEach(cb => {
+    const cat = CATEGORIE[cb.value];
+    cb.checked = cat ? match(cb.value, cat.label) : false;
+  });
+}
+
 function getExportRows(){
   const scopeEnte = document.getElementById('expScopeEnte').checked;
   const enteSel = document.getElementById('selEnte').value;
@@ -1296,14 +1395,18 @@ function doPrint(){
       rat = (rat === '—' ? '' : rat + ' / ') + com;
     }
     const verb = a.verbN ? ('n. '+a.verbN+' del '+fmtDate(a.verbData)) : '—';
-    const pff = a.soggettoPFF ? (a.pffData ? fmtDate(a.pffData) : 'DA TRASMETTERE') : '—';
+    let pff = a.soggettoPFF ? (a.pffData ? 'PFF '+fmtDate(a.pffData) : 'PFF DA TRASMETTERE') : '';
+    if(a.richiedeCdC){
+      pff += (pff ? ' / ' : '') + ((a.cdcProcData && a.cdcConteData) ? 'CdC ok' : 'CdC PENDENTE');
+    }
+    if(!pff) pff = '—';
     return '<tr><td>'+esc(enteShort(a.ente))+'</td><td>'+esc(cat.label)+'</td><td>'+esc(a.oggetto)+'</td><td>'+esc(del)+'</td><td>'+esc(schema)+'</td><td>'+esc(rat)+'</td><td>'+esc(verb)+'</td><td>'+(esito?esito.label:'—')+'</td><td>'+esc(pff)+'</td></tr>';
   }).join('');
   const html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Fascicolo Ente — Estrazione '+anno+'</title>'
     + '<style>body{font-family:Arial,sans-serif;font-size:11px;color:#1a1d23;padding:24px}h1{font-size:16px;margin:0 0 2px}h2{font-size:11px;font-weight:normal;color:#555;margin:0 0 16px}table{width:100%;border-collapse:collapse}th{background:#0f172a;color:#fff;padding:6px 8px;font-size:9px;text-transform:uppercase;text-align:left}td{border-bottom:1px solid #ddd;padding:6px 8px;vertical-align:top}tr:nth-child(even) td{background:#f6f7f9}@media print{body{padding:0}}</style></head><body>'
     + '<h1>🏛️ Fascicolo Ente — Registro atti deliberativi '+anno+'</h1>'
     + '<h2>'+esc(scopeLabel)+' — '+rows.length+' atti — Studio Grismondi srl — stampato il '+oggi+'</h2>'
-    + '<table><thead><tr><th>Ente</th><th>Tipo</th><th>Oggetto</th><th>Delibera</th><th>Schema GC</th><th>Ratifica / Com. CC</th><th>Verbale revisore</th><th>Esito</th><th>PFF</th></tr></thead><tbody>'
+    + '<table><thead><tr><th>Ente</th><th>Tipo</th><th>Oggetto</th><th>Delibera</th><th>Schema GC</th><th>Ratifica / Com. CC</th><th>Verbale revisore</th><th>Esito</th><th>PFF / CdC</th></tr></thead><tbody>'
     + (tr || '<tr><td colspan="9">Nessun atto per i criteri selezionati</td></tr>')
     + '</tbody></table></body></html>';
   const w = window.open('', '_blank');
@@ -1317,7 +1420,7 @@ function doExportCSV(){
   if(!exp) return;
   const { rows, anno, scopeLabel } = exp;
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
-  const head = ['Ente','Esercizio','Tipo Atto','Oggetto','Organo','Schema GC N','Schema GC Data','Delibera N','Delibera Data','Ratifica N','Ratifica Data','Comunicazione CC Rif','Comunicazione CC Data','Verbale N','Verbale Data','Esito Parere','Soggetto PFF','Data PFF','Note'];
+  const head = ['Ente','Esercizio','Tipo Atto','Oggetto','Organo','Schema GC N','Schema GC Data','Delibera N','Delibera Data','Ratifica N','Ratifica Data','Comunicazione CC Rif','Comunicazione CC Data','Verbale N','Verbale Data','Esito Parere','Soggetto PFF','Data PFF','Soggetto CdC','CdC Procura Data','CdC ConTe Data','Note'];
   const lines = [head.map(q).join(';')];
   rows.forEach(a => {
     const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
@@ -1332,6 +1435,9 @@ function doExportCSV(){
       esito ? esito.label : '',
       a.soggettoPFF ? 'Sì' : 'No',
       a.pffData ? fmtDate(a.pffData) : (pffPendente(a) ? 'DA TRASMETTERE' : ''),
+      a.richiedeCdC ? 'Sì' : 'No',
+      a.cdcProcData ? fmtDate(a.cdcProcData) : (a.richiedeCdC && a.delN ? 'DA INVIARE' : ''),
+      a.cdcConteData ? fmtDate(a.cdcConteData) : (a.richiedeCdC && a.delN ? 'DA CARICARE' : ''),
       a.note
     ].map(q).join(';'));
   });
@@ -1343,6 +1449,66 @@ function doExportCSV(){
   document.body.appendChild(link); link.click(); document.body.removeChild(link);
   URL.revokeObjectURL(url);
   toast('✅ CSV esportato — '+rows.length+' atti');
+  closePrintModal();
+}
+
+// Testo discorsivo pronto da adattare alle relazioni (es. relazione GC, parere revisore)
+function doTestoRelazione(){
+  const exp = getExportRows();
+  if(!exp) return;
+  const { rows, anno, scopeLabel } = exp;
+
+  const fraseAtto = a => {
+    let s;
+    if(!a.delN){
+      s = (a.organo === 'DET' ? 'determinazione' : 'deliberazione di ' + (a.organo === 'GC' ? 'Giunta Comunale' : 'Consiglio Comunale')) + ' in corso di approvazione, avente ad oggetto "' + a.oggetto + '"';
+    } else if(a.organo === 'DET'){
+      s = 'determinazione del Responsabile del Servizio n. ' + a.delN + ' del ' + fmtDate(a.delData) + ', avente ad oggetto "' + a.oggetto + '"';
+    } else {
+      s = 'deliberazione di ' + (a.organo === 'GC' ? 'Giunta Comunale' : 'Consiglio Comunale') + ' n. ' + a.delN + ' del ' + fmtDate(a.delData) + ', avente ad oggetto "' + a.oggetto + '"';
+    }
+    if(a.schemaN) s += ', previa approvazione dello schema con deliberazione di Giunta Comunale n. ' + a.schemaN + (a.schemaData ? ' del ' + fmtDate(a.schemaData) : '');
+    if(a.organo === 'GC' && a.richiedeRat){
+      s += a.ratN ? ', ratificata con deliberazione di Consiglio Comunale n. ' + a.ratN + (a.ratData ? ' del ' + fmtDate(a.ratData) : '')
+                  : ', in attesa di ratifica consiliare ai sensi dell\'art. 175, comma 4, del TUEL';
+    }
+    if(a.organo === 'GC' && a.richiedeCom){
+      s += a.comData ? ', comunicata al Consiglio Comunale in data ' + fmtDate(a.comData) + ' ai sensi dell\'art. 176 del TUEL'
+                     : (a.delN ? ', da comunicare al Consiglio Comunale ai sensi dell\'art. 176 del TUEL' : '');
+    }
+    if(a.richiedeCdC){
+      if(a.cdcProcData && a.cdcConteData) s += ', trasmessa alla Procura regionale della Corte dei conti in data ' + fmtDate(a.cdcProcData) + ' e caricata sul portale ConTe in data ' + fmtDate(a.cdcConteData);
+      else if(a.delN) s += ', da trasmettere alla Corte dei conti (Procura regionale e portale ConTe) ai sensi dell\'art. 23, comma 5, della L. 289/2002';
+    }
+    if(a.soggettoPFF && a.pffData) s += ', trasmessa al Portale del federalismo fiscale in data ' + fmtDate(a.pffData);
+    else if(pffPendente(a)) s += ', da trasmettere al Portale del federalismo fiscale';
+    if(a.verbN){
+      const es = ESITI[a.esito];
+      s += '. L\'Organo di revisione si è espresso con verbale n. ' + a.verbN + (a.verbData ? ' del ' + fmtDate(a.verbData) : '') + (es ? ' (parere ' + es.label.toLowerCase() + ')' : '');
+    }
+    return s + '.';
+  };
+
+  // Raggruppo per tipo atto, in ordine cronologico
+  const gruppi = {};
+  rows.forEach(a => { (gruppi[a.cat] = gruppi[a.cat] || []).push(a); });
+  let testo = 'Estrazione atti — ' + scopeLabel + ' — Esercizio ' + anno + '\n\n';
+  Object.entries(gruppi).forEach(([k, lista]) => {
+    const cat = CATEGORIE[k] || CATEGORIE.altro;
+    testo += cat.label.toUpperCase() + '\n';
+    lista.forEach(a => { testo += '\u2022 ' + fraseAtto(a) + '\n'; });
+    testo += '\n';
+  });
+  if(rows.length === 0) testo += 'Nessun atto per i criteri selezionati.\n';
+
+  const w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Testo per relazione — '+anno+'</title>'
+    + '<style>body{font-family:Georgia,serif;font-size:13px;line-height:1.7;color:#1a1d23;max-width:800px;margin:0 auto;padding:24px}textarea{display:none}#txt{white-space:pre-wrap;border:1px solid #ddd;border-radius:8px;padding:20px;background:#fafafa}.bar{position:sticky;top:0;background:#fff;padding:10px 0;border-bottom:1px solid #eee;margin-bottom:16px}button{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer}small{color:#777;margin-left:10px}</style></head><body>'
+    + '<div class="bar"><button onclick="navigator.clipboard.writeText(document.getElementById(\'txt\').innerText).then(()=>{this.textContent=\'✅ Copiato!\'})">📋 Copia tutto</button><small>Testo modificabile: clicca e adatta prima di copiare</small></div>'
+    + '<div id="txt" contenteditable="true"></div>'
+    + '</body></html>');
+  w.document.close();
+  w.document.getElementById('txt').textContent = testo;
   closePrintModal();
 }
 
