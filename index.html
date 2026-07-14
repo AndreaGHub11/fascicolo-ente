@@ -84,7 +84,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;}
 .atto-title{font-size:14px;font-weight:700;}
 .badge-row{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;}
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;white-space:nowrap;}
 .badge.delibera{background:var(--primary-light);color:var(--primary);}
 .badge.fav{background:var(--success-light);color:var(--success);}
 .badge.rilievi{background:var(--warning-light);color:var(--warning);}
@@ -111,13 +111,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .act-del{background:var(--danger-light);color:var(--danger);border:none;padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
 /* Compact */
 .compact-wrap{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.compact-table{width:100%;border-collapse:collapse;min-width:900px;}
-.compact-table thead th{background:var(--nav-bg);color:rgba(255,255,255,0.85);padding:9px 10px;font-size:10px;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;}
+.compact-table{width:100%;border-collapse:collapse;min-width:980px;table-layout:fixed;}
+.compact-table thead th{background:var(--nav-bg);color:rgba(255,255,255,0.85);padding:9px 10px;font-size:10px;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .compact-table tbody tr{border-bottom:1px solid var(--border-light);cursor:pointer;transition:background 0.1s;}
 .compact-table tbody tr:hover{background:#f8f9fb;}
-.compact-table tbody td{padding:8px 10px;font-size:11px;vertical-align:middle;white-space:nowrap;}
-.ct-atto{font-weight:700;font-size:12px;white-space:normal;min-width:170px;max-width:340px;overflow-wrap:break-word;word-break:break-word;line-height:1.35;}
-.ct-ente{font-weight:700;font-size:11px;color:var(--primary);white-space:normal;min-width:120px;max-width:170px;overflow-wrap:break-word;}
+.compact-table tbody td{padding:8px 10px;font-size:11px;vertical-align:middle;white-space:normal;overflow-wrap:break-word;word-break:break-word;}
+.ct-atto{font-weight:700;font-size:12px;line-height:1.35;}
+.ct-ente{font-weight:700;font-size:11px;color:var(--primary);}
+.ct-num{font-weight:700;font-family:'Space Grotesk',sans-serif;white-space:nowrap;}
+.ct-date{font-size:10px;color:var(--text-secondary);white-space:nowrap;}
 .ct-num{font-weight:700;font-family:'Space Grotesk',sans-serif;}
 .ct-date{font-size:10px;color:var(--text-secondary);}
 .ct-dash{color:var(--text-muted);}
@@ -924,6 +926,9 @@ function renderCompact(atti, showEnte){
       + '<td>'+delCol+'</td><td>'+ratCol+'</td><td>'+revCol+'</td><td>'+esitoCol+'</td><td>'+pffCol+'</td></tr>';
   });
   return '<div class="compact-wrap"><table class="compact-table">'
+    + (showEnte
+        ? '<colgroup><col style="width:40px"><col style="width:120px"><col><col style="width:140px"><col style="width:170px"><col style="width:105px"><col style="width:115px"><col style="width:115px"></colgroup>'
+        : '<colgroup><col style="width:40px"><col><col style="width:150px"><col style="width:180px"><col style="width:110px"><col style="width:125px"><col style="width:125px"></colgroup>')
     + '<thead><tr><th></th>'+(showEnte?'<th>Ente</th>':'')+'<th>Atto</th><th>Delibera</th><th>Schema / Ratifica</th><th>Verbale Revisore</th><th>Esito Parere</th><th>PFF / CdC</th></tr></thead>'
     + '<tbody>'+rows+'</tbody></table></div>'
     + '<div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:right">💡 Clicca su una riga per aprire il dettaglio</div>';
