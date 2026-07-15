@@ -245,7 +245,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.7</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.8</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
     <button class="nav-btn" id="btnExport">🖨️ Esporta</button>
@@ -283,10 +283,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.7 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.8 (BETA — solo Amministratori)</footer>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- MODAL CHIUSURA ASSISTITA SCADENZE -->
+<div class="modal-overlay" id="chiusuraMo" onclick="if(event.target===this)closeChiusuraModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🔗 Scadenze collegate nello Scadenziario</h3>
+      <button class="modal-close" onclick="closeChiusuraModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ctx-box" id="chiusuraCtx"></div>
+      <div class="hint" style="margin-bottom:12px">💡 Ho trovato nello Scadenziario queste scadenze aperte che sembrano corrispondere all'atto appena registrato. Flagga quelle da segnare come completate — verranno aggiornate per questo ente, senza toccare gli altri.</div>
+      <div class="exp-cats" id="chiusuraList" style="grid-template-columns:1fr;max-height:260px"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeChiusuraModal()">Non ora</button>
+      <button class="btn btn-primary" id="btnChiusura" onclick="confermaChiusura()">✅ Segna completate</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL EXPORT -->
 <div class="modal-overlay" id="printMo" onclick="if(event.target===this)closePrintModal()">
@@ -508,6 +527,8 @@ const CATEGORIE = {
   variazione_cassa:{label:'Variazione di Cassa (GC)',icon:'💶',color:'#0d9488'},
   variazione_determina:{label:'Variazione con Determina Responsabile',icon:'🖊️',color:'#64748b'},
   variazioni:{label:'Variazioni di Bilancio (generica)',icon:'📝',color:'#dc2626'},
+  flussi_cassa:{label:'Flussi di Cassa — approvazione (GC)',icon:'💧',color:'#0369a1'},
+  flussi_cassa_agg:{label:'Flussi di Cassa — aggiornamento trimestrale',icon:'💧',color:'#0284c7'},
   dfb:{label:'Debiti Fuori Bilancio (DFB)',icon:'⚖️',color:'#b91c1c'},
   tari:{label:'Tariffe TARI',icon:'🗑️',color:'#b45309'},
   imu:{label:'Aliquote IMU',icon:'🏠',color:'#6d28d9'},
@@ -642,6 +663,7 @@ async function deleteItem(listName, id){
 // LOAD DATA
 // ============================================================
 async function loadData(){
+  SCAD_CACHE = null; // v2.8: la cache Scadenziario si rinfresca a ogni sync
   const lb = document.getElementById('loadingBox');
   lb.style.display = 'block';
   document.getElementById('attiArea').innerHTML = '';
@@ -894,7 +916,7 @@ function renderCompact(atti, showEnte){
       } else { ratCol = '<span class="badge gc">⏳ da ratificare</span>'; }
     }
     if(a.organo === 'GC' && a.richiedeCom){
-      const comBadge = a.comData ? '<span class="badge com-ok">📣 Com. CC '+fmtDate(a.comData)+'</span>'
+      const comBadge = a.comData ? '<span class="badge com-ok">📣 Com. CC '+(a.comN ? esc(a.comN)+' — ' : '')+fmtDate(a.comData)+'</span>'
                      : (a.delN ? '<span class="badge com-alert">📣 DA COMUNICARE al CC</span>' : '<span class="badge com-ok">📣 com. dopo approv.</span>');
       ratCol = (ratCol.includes('ct-dash') ? '' : ratCol + ' ') + comBadge;
     }
@@ -968,7 +990,7 @@ function renderCards(atti){
     }
     if(a.verbN && esito){ badges += '<span class="badge '+esito.cls+'">'+esito.icon+' Verbale n. '+esc(a.verbN)+' del '+fmtDate(a.verbData)+'</span>'; }
     if(a.organo === 'GC' && a.richiedeCom){
-      badges += a.comData ? '<span class="badge com-ok">📣 Comunicata al CC il '+fmtDate(a.comData)+'</span>'
+      badges += a.comData ? '<span class="badge com-ok">📣 Comunicata al CC '+(a.comN ? esc(a.comN)+' — ' : '')+'il '+fmtDate(a.comData)+'</span>'
               : (a.delN ? '<span class="badge com-alert">📣 DA COMUNICARE al CC</span>' : '<span class="badge com-ok">📣 Da comunicare dopo approvazione</span>');
     }
     if(a.soggettoPFF){
@@ -1163,6 +1185,12 @@ async function catChanged(){
       setOrgano('CC');
       document.getElementById('f-cdc').checked = true;
       toggleCdC();
+    } else if(sel.value === 'flussi_cassa'){
+      // Approvazione iniziale del prospetto flussi di cassa: delibera GC (entro febbraio)
+      setOrgano('GC');
+    } else if(sel.value === 'flussi_cassa_agg'){
+      // Aggiornamento trimestrale: determina del responsabile
+      setOrgano('DET');
     }
   }
   autoOggetto();
@@ -1301,6 +1329,7 @@ async function saveAtto(){
   };
 
   try{
+    const enteAtto = editId ? ((ATTI.find(x => String(x.id) === String(editId)) || {}).ente || '') : document.getElementById('selEnte').value;
     if(editId){
       await updateItem(LIST_FASCICOLO, editId, fields);
       toast('✅ Atto aggiornato');
@@ -1311,6 +1340,8 @@ async function saveAtto(){
     }
     closeModal();
     await loadData();
+    // v2.8: se l'atto è approvato, propongo la chiusura delle scadenze collegate nello Scadenziario
+    if(fields.DeliberaN){ proponiChiusuraScadenze(enteAtto, fields.Anno, fields.Categoria); }
   }catch(err){
     console.error(err);
     toast('❌ Errore salvataggio: '+err.message, false);
@@ -1331,6 +1362,111 @@ async function delAtto(id){
     console.error(err);
     toast('❌ Errore eliminazione: '+err.message, false);
   }
+}
+
+// ============================================================
+// v2.8: CHIUSURA ASSISTITA — collegamento con lo Scadenziario
+// Al salvataggio di un atto approvato, cerca nello Scadenziario
+// le scadenze aperte dell'ente coerenti col tipo atto e propone
+// di segnarle come completate. Solo lettura+update mirato, con
+// conferma esplicita: nessuna chiusura automatica cieca.
+// ============================================================
+let SCAD_CACHE = null;
+let chiusuraCandidate = [];
+
+async function loadScadCache(){
+  if(SCAD_CACHE) return SCAD_CACHE;
+  const [adempimenti, enti] = await Promise.all([
+    getListItems('Scadenziario_Adempimenti'),
+    getListItems('Scadenziario_Enti')
+  ]);
+  SCAD_CACHE = { adempimenti, enti };
+  return SCAD_CACHE;
+}
+
+// Parole chiave per collegare tipo atto -> titolo adempimento nello Scadenziario.
+// I tipi "evento" (variazioni, DFB, prelievi) non triggherano: non sono scadenze ricorrenti.
+function keywordsCategoria(catKey){
+  const map = {
+    bilancio: ['bilancio di previsione'],
+    rendiconto: ['rendiconto'],
+    salvaguardia: ['salvaguardia', 'equilibri'],
+    assestamento: ['assestamento'],
+    dup: ['dup', 'documento unico'],
+    tari: ['tari'],
+    imu: ['imu'],
+    conto_annuale: ['conto annuale'],
+    piano_performance: ['performance'],
+    flussi_cassa: ['flussi di cassa'],
+    flussi_cassa_agg: ['flussi di cassa']
+  };
+  if(map[catKey]) return map[catKey];
+  if(String(catKey).startsWith('custom_')){
+    // tipi personalizzati: parole significative del nome (min 4 lettere)
+    const label = (CATEGORIE[catKey] ? CATEGORIE[catKey].label : '').toLowerCase().replace(/\(.*?\)/g, '');
+    const parole = label.split(/[^a-zàèéìòù]+/).filter(w => w.length >= 4);
+    return parole.length ? [parole.join(' ')] : [];
+  }
+  return [];
+}
+
+async function proponiChiusuraScadenze(enteNome, esercizio, catKey){
+  try{
+    const kws = keywordsCategoria(catKey);
+    if(!kws.length || !enteNome) return;
+    const { adempimenti, enti } = await loadScadCache();
+    const adeMap = {};
+    adempimenti.forEach(a => { adeMap[String(a.ID)] = a; });
+
+    chiusuraCandidate = enti.filter(r => {
+      if((r.Comune || '') !== enteNome) return false;
+      if(String(r.StatoEnte || '').toLowerCase() === 'completato') return false;
+      const ade = adeMap[String(r.AdempimentoID)];
+      if(!ade) return false;
+      if(ade.HasFasi === true || ade.HasFasi === 'true') return false; // le fasi si completano nello Scadenziario
+      const annoScad = String(ade.DataScadenza || '').slice(0, 4);
+      if(annoScad && esercizio && annoScad !== String(esercizio)) return false;
+      const tit = (String(ade.Title || '') + ' ' + String(ade.Descrizione || '')).toLowerCase();
+      return kws.some(k => tit.includes(k));
+    }).map(r => ({ riga: r, ade: adeMap[String(r.AdempimentoID)] }));
+
+    if(chiusuraCandidate.length === 0) return;
+
+    const fmtScad = d => { if(!d) return ''; const p = String(d).split('T')[0].split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
+    document.getElementById('chiusuraCtx').innerHTML = '<strong>🏛️ '+esc(enteNome)+'</strong> — '+chiusuraCandidate.length+' scadenz'+(chiusuraCandidate.length===1?'a aperta':'e aperte')+' nello Scadenziario';
+    document.getElementById('chiusuraList').innerHTML = chiusuraCandidate.map((c, i) =>
+      '<label class="exp-cat" style="align-items:flex-start"><input type="checkbox" class="chiusura-cb" value="'+i+'"'+(chiusuraCandidate.length===1?' checked':'')+'>'
+      + '<div><div style="font-weight:700">'+esc(c.ade.Title || '')+'</div>'
+      + '<div style="font-size:10px;color:var(--text-secondary)">'
+      + (c.ade.DataScadenza ? 'Scadenza: '+fmtScad(c.ade.DataScadenza) : '')
+      + (c.ade.Tipologia ? ' · '+esc(c.ade.Tipologia) : '')
+      + (c.riga.StatoEnte ? ' · stato attuale: '+esc(c.riga.StatoEnte) : '')
+      + '</div></div></label>'
+    ).join('');
+    document.getElementById('chiusuraMo').classList.add('show');
+  }catch(e){
+    console.warn('Chiusura assistita non disponibile:', e.message);
+  }
+}
+
+function closeChiusuraModal(){ document.getElementById('chiusuraMo').classList.remove('show'); }
+
+async function confermaChiusura(){
+  const scelte = [...document.querySelectorAll('.chiusura-cb:checked')].map(cb => chiusuraCandidate[parseInt(cb.value)]);
+  if(scelte.length === 0){ closeChiusuraModal(); return; }
+  const btn = document.getElementById('btnChiusura');
+  btn.disabled = true; btn.textContent = '⏳ Aggiorno...';
+  let ok = 0, ko = 0;
+  for(const c of scelte){
+    try{
+      await updateItem('Scadenziario_Enti', c.riga.ID, { StatoEnte: 'Completato', ProgressEnte: 100 });
+      c.riga.StatoEnte = 'Completato'; // aggiorno la cache locale
+      ok++;
+    }catch(e){ console.error(e); ko++; }
+  }
+  btn.disabled = false; btn.textContent = '✅ Segna completate';
+  closeChiusuraModal();
+  toast(ko === 0 ? '✅ '+ok+' scadenz'+(ok===1?'a completata':'e completate')+' nello Scadenziario' : '⚠️ Completate '+ok+', errori su '+ko, ko === 0);
 }
 
 // ============================================================
@@ -1489,7 +1625,7 @@ function doTestoRelazione(){
                   : ', in attesa di ratifica consiliare ai sensi dell\'art. 175, comma 4, del TUEL';
     }
     if(a.organo === 'GC' && a.richiedeCom){
-      s += a.comData ? ', comunicata al Consiglio Comunale in data ' + fmtDate(a.comData) + ' ai sensi dell\'art. 176 del TUEL'
+      s += a.comData ? ', comunicata al Consiglio Comunale' + (a.comN ? ' (' + a.comN + ')' : '') + ' in data ' + fmtDate(a.comData) + ' ai sensi dell\'art. 176 del TUEL'
                      : (a.delN ? ', da comunicare al Consiglio Comunale ai sensi dell\'art. 176 del TUEL' : '');
     }
     if(a.richiedeCdC){
