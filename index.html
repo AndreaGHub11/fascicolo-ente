@@ -254,7 +254,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.10</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.11</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
     <button class="nav-btn" id="btnExport">🖨️ Esporta</button>
@@ -292,7 +292,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.10 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.11 (BETA — solo Amministratori)</footer>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1417,11 +1417,11 @@ async function saveAtto(){
     }
     closeModal();
     await loadData();
-    // v2.8/2.9: se l'atto è approvato, propongo la chiusura delle scadenze collegate nello Scadenziario
-    // (incluse quelle di comunicazione alla Prefettura, se la data è stata appena compilata)
+    // v2.11: controllo SEMPRE attivo — a ogni atto approvato verifico le scadenze
+    // collegate nello Scadenziario (incluse le comunicazioni Prefettura appena compilate)
     if(fields.DeliberaN){
       const extra = fields.PrefetturaData ? ['prefettura'] : [];
-      proponiChiusuraScadenze(enteAtto, fields.Anno, fields.Categoria, extra);
+      proponiChiusuraScadenze(enteAtto, fields.Anno, fields.Categoria, extra, oggetto);
     }
   }catch(err){
     console.error(err);
@@ -1483,21 +1483,33 @@ function keywordsCategoria(catKey){
     conto_annuale: ['conto annuale'],
     piano_performance: ['performance'],
     flussi_cassa: ['flussi di cassa'],
-    flussi_cassa_agg: ['flussi di cassa']
+    flussi_cassa_agg: ['flussi di cassa'],
+    variazione_cc: ['variazion'],
+    variazione_urgente: ['variazion'],
+    variazione_cassa: ['variazion'],
+    variazione_determina: ['variazion'],
+    variazioni: ['variazion'],
+    dfb: ['debiti fuori bilancio', 'dfb']
   };
   if(map[catKey]) return map[catKey];
   if(String(catKey).startsWith('custom_')){
-    // tipi personalizzati: parole significative del nome (min 4 lettere)
+    // tipi personalizzati: parole significative del nome (min 4 lettere), match su ciascuna
     const label = (CATEGORIE[catKey] ? CATEGORIE[catKey].label : '').toLowerCase().replace(/\(.*?\)/g, '');
-    const parole = label.split(/[^a-zàèéìòù]+/).filter(w => w.length >= 4);
-    return parole.length ? [parole.join(' ')] : [];
+    return label.split(/[^a-zàèéìòù]+/).filter(w => w.length >= 4);
   }
-  return [];
+  return []; // 'altro' e tipi ignoti: si usa il fallback sull'oggetto dell'atto
 }
 
-async function proponiChiusuraScadenze(enteNome, esercizio, catKey, extraKws){
+async function proponiChiusuraScadenze(enteNome, esercizio, catKey, extraKws, oggettoAtto){
   try{
-    const kws = keywordsCategoria(catKey).concat(extraKws || []);
+    let kws = keywordsCategoria(catKey).concat(extraKws || []);
+    // v2.11: controllo universale — se il tipo non ha parole chiave (es. "Altro"),
+    // uso le parole significative dell'oggetto dell'atto
+    if(kws.length === 0 && oggettoAtto){
+      const stop = ['della','dello','delle','degli','anno','comune','comunale','approvazione','adozione','presa','atto','generale','esercizio','triennio'];
+      kws = String(oggettoAtto).toLowerCase().replace(/\(.*?\)/g, ' ').split(/[^a-zàèéìòù]+/)
+        .filter(w => w.length >= 5 && !stop.includes(w)).slice(0, 5);
+    }
     if(!kws.length || !enteNome) return;
     const { adempimenti, enti, fasi, comuniFasi } = await loadScadCache();
     const adeMap = {}, faseMap = {};
