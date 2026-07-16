@@ -254,7 +254,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.9</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.10</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
     <button class="nav-btn" id="btnExport">🖨️ Esporta</button>
@@ -292,7 +292,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.9 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.10 (BETA — solo Amministratori)</footer>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1457,11 +1457,14 @@ let chiusuraCandidate = [];
 
 async function loadScadCache(){
   if(SCAD_CACHE) return SCAD_CACHE;
-  const [adempimenti, enti] = await Promise.all([
-    getListItems('Scadenziario_Adempimenti'),
-    getListItems('Scadenziario_Enti')
+  const safe = l => getListItems(l).catch(e => { console.warn('Lista '+l+' non disponibile:', e.message); return []; });
+  const [adempimenti, enti, fasi, comuniFasi] = await Promise.all([
+    safe('Scadenziario_Adempimenti'),
+    safe('Scadenziario_Enti'),
+    safe('Scadenziario_Fasi'),
+    safe('Scadenziario_Comuni_Fasi')
   ]);
-  SCAD_CACHE = { adempimenti, enti };
+  SCAD_CACHE = { adempimenti, enti, fasi, comuniFasi };
   return SCAD_CACHE;
 }
 
@@ -1496,31 +1499,57 @@ async function proponiChiusuraScadenze(enteNome, esercizio, catKey, extraKws){
   try{
     const kws = keywordsCategoria(catKey).concat(extraKws || []);
     if(!kws.length || !enteNome) return;
-    const { adempimenti, enti } = await loadScadCache();
-    const adeMap = {};
+    const { adempimenti, enti, fasi, comuniFasi } = await loadScadCache();
+    const adeMap = {}, faseMap = {};
     adempimenti.forEach(a => { adeMap[String(a.ID)] = a; });
+    fasi.forEach(f => { faseMap[String(f.ID)] = f; });
 
-    chiusuraCandidate = enti.filter(r => {
-      if((r.Comune || '') !== enteNome) return false;
-      if(String(r.StatoEnte || '').toLowerCase() === 'completato') return false;
-      const ade = adeMap[String(r.AdempimentoID)];
+    // Adempimenti che corrispondono per parole chiave ed esercizio
+    const adeOk = ade => {
       if(!ade) return false;
-      if(ade.HasFasi === true || ade.HasFasi === 'true') return false; // le fasi si completano nello Scadenziario
       const annoScad = String(ade.DataScadenza || '').slice(0, 4);
       if(annoScad && esercizio && annoScad !== String(esercizio)) return false;
       const tit = (String(ade.Title || '') + ' ' + String(ade.Descrizione || '')).toLowerCase();
       return kws.some(k => tit.includes(k));
-    }).map(r => ({ riga: r, ade: adeMap[String(r.AdempimentoID)] }));
+    };
+
+    chiusuraCandidate = [];
+
+    // 1) Adempimenti SENZA fasi: riga in Scadenziario_Enti
+    enti.forEach(r => {
+      if((r.Comune || '') !== enteNome) return;
+      if(String(r.StatoEnte || '').toLowerCase() === 'completato') return;
+      const ade = adeMap[String(r.AdempimentoID)];
+      if(!ade || ade.HasFasi === true || ade.HasFasi === 'true') return;
+      if(!adeOk(ade)) return;
+      chiusuraCandidate.push({ lista: 'Scadenziario_Enti', riga: r, ade: ade, fase: null });
+    });
+
+    // 2) Adempimenti A FASI: righe fase-per-comune in Scadenziario_Comuni_Fasi
+    comuniFasi.forEach(r => {
+      if((r.Comune || '') !== enteNome) return;
+      if(r.Attivo === false || r.Attivo === 'false') return;
+      if(String(r.StatoEnte || '').toLowerCase() === 'completato') return;
+      const ade = adeMap[String(r.AdempimentoID)];
+      if(!ade || !adeOk(ade)) return;
+      chiusuraCandidate.push({ lista: 'Scadenziario_Comuni_Fasi', riga: r, ade: ade, fase: faseMap[String(r.FaseID)] || null });
+    });
 
     if(chiusuraCandidate.length === 0) return;
+
+    // Ordino: prima per adempimento, poi per scadenza fase
+    const dOf = c => String((c.fase && c.fase.DataScadenzaFase) || c.ade.DataScadenza || '9999');
+    chiusuraCandidate.sort((a, b) => (a.ade.Title || '').localeCompare(b.ade.Title || '') || dOf(a).localeCompare(dOf(b)));
 
     const fmtScad = d => { if(!d) return ''; const p = String(d).split('T')[0].split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
     document.getElementById('chiusuraCtx').innerHTML = '<strong>🏛️ '+esc(enteNome)+'</strong> — '+chiusuraCandidate.length+' scadenz'+(chiusuraCandidate.length===1?'a aperta':'e aperte')+' nello Scadenziario';
     document.getElementById('chiusuraList').innerHTML = chiusuraCandidate.map((c, i) =>
       '<label class="exp-cat" style="align-items:flex-start"><input type="checkbox" class="chiusura-cb" value="'+i+'"'+(chiusuraCandidate.length===1?' checked':'')+'>'
-      + '<div><div style="font-weight:700">'+esc(c.ade.Title || '')+'</div>'
+      + '<div><div style="font-weight:700">'+esc(c.ade.Title || '')
+      + (c.fase ? ' <span style="color:var(--accent)">→ Fase: '+esc(c.fase.Title || '')+'</span>' : '')
+      + '</div>'
       + '<div style="font-size:10px;color:var(--text-secondary)">'
-      + (c.ade.DataScadenza ? 'Scadenza: '+fmtScad(c.ade.DataScadenza) : '')
+      + (c.fase && c.fase.DataScadenzaFase ? 'Scadenza fase: '+fmtScad(c.fase.DataScadenzaFase) : (c.ade.DataScadenza ? 'Scadenza: '+fmtScad(c.ade.DataScadenza) : ''))
       + (c.ade.Tipologia ? ' · '+esc(c.ade.Tipologia) : '')
       + (c.riga.StatoEnte ? ' · stato attuale: '+esc(c.riga.StatoEnte) : '')
       + '</div></div></label>'
@@ -1541,7 +1570,7 @@ async function confermaChiusura(){
   let ok = 0, ko = 0;
   for(const c of scelte){
     try{
-      await updateItem('Scadenziario_Enti', c.riga.ID, { StatoEnte: 'Completato', ProgressEnte: 100 });
+      await updateItem(c.lista, c.riga.ID, { StatoEnte: 'Completato', ProgressEnte: 100 });
       c.riga.StatoEnte = 'Completato'; // aggiorno la cache locale
       ok++;
     }catch(e){ console.error(e); ko++; }
