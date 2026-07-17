@@ -254,7 +254,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.11</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.12</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
     <button class="nav-btn" id="btnExport">🖨️ Esporta</button>
@@ -292,7 +292,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.11 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.12 (BETA — solo Amministratori)</footer>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1525,12 +1525,15 @@ async function proponiChiusuraScadenze(enteNome, esercizio, catKey, extraKws, og
       return kws.some(k => tit.includes(k));
     };
 
+    // Stati da NON proporre: già completati o dichiarati non gestiti per l'ente
+    const statoEscluso = r => ['completato', 'non gestito'].includes(String(r.StatoEnte || '').toLowerCase());
+
     chiusuraCandidate = [];
 
     // 1) Adempimenti SENZA fasi: riga in Scadenziario_Enti
     enti.forEach(r => {
       if((r.Comune || '') !== enteNome) return;
-      if(String(r.StatoEnte || '').toLowerCase() === 'completato') return;
+      if(statoEscluso(r)) return;
       const ade = adeMap[String(r.AdempimentoID)];
       if(!ade || ade.HasFasi === true || ade.HasFasi === 'true') return;
       if(!adeOk(ade)) return;
@@ -1541,7 +1544,7 @@ async function proponiChiusuraScadenze(enteNome, esercizio, catKey, extraKws, og
     comuniFasi.forEach(r => {
       if((r.Comune || '') !== enteNome) return;
       if(r.Attivo === false || r.Attivo === 'false') return;
-      if(String(r.StatoEnte || '').toLowerCase() === 'completato') return;
+      if(statoEscluso(r)) return;
       const ade = adeMap[String(r.AdempimentoID)];
       if(!ade || !adeOk(ade)) return;
       chiusuraCandidate.push({ lista: 'Scadenziario_Comuni_Fasi', riga: r, ade: ade, fase: faseMap[String(r.FaseID)] || null });
