@@ -254,9 +254,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.12</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.13</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
+    <button class="nav-btn" id="btnReport">📄 Report Ente</button>
     <button class="nav-btn" id="btnExport">🖨️ Esporta</button>
     <button class="nav-btn" id="btnSync">🔄 Sync</button>
     <button class="nav-btn" id="btnLogout">Esci</button>
@@ -292,7 +293,40 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.12 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.13 (BETA — solo Amministratori)</footer>
+</div>
+
+<!-- MODAL REPORT ENTE -->
+<div class="modal-overlay" id="reportMo" onclick="if(event.target===this)closeReportModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>📄 Report annuale per l'Ente</h3>
+      <button class="modal-close" onclick="closeReportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:12px">💡 Documento di rendicontazione dell'attività svolta, destinato all'Ente. Unisce gli atti del Fascicolo e gli adempimenti dello Scadenziario. Il testo si apre modificabile: rifiniscilo prima di consegnarlo.</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ente</label>
+          <select id="rep-ente"></select>
+        </div>
+        <div class="form-group">
+          <label>Esercizio</label>
+          <select id="rep-anno"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Contenuto</label>
+        <label class="exp-cat" style="padding:8px 6px"><input type="checkbox" id="rep-incorso" checked> Includi la sezione "attività in corso" (adempimenti ancora aperti)</label>
+        <label class="exp-cat" style="padding:8px 6px"><input type="checkbox" id="rep-integrale"> Versione integrale interna (include anche le fasi non gestite)</label>
+      </div>
+      <div class="hint">Le fasi in stato "Non Gestito" sono scelte organizzative interne: restano fuori dal report destinato all'Ente, salvo versione integrale.</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeReportModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="generaReportEnte()">📄 Genera report</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1596,6 +1630,176 @@ async function confermaChiusura(){
 }
 
 // ============================================================
+// v2.13: REPORT ANNUALE PER L'ENTE
+// Rendicontazione dell'attività svolta, unendo gli atti del
+// Fascicolo e gli adempimenti dello Scadenziario. Solo admin
+// (l'intera app è riservata agli amministratori).
+// Le fasi "Non Gestito" restano fuori: sono scelte interne.
+// ============================================================
+function openReportModal(){
+  const se = document.getElementById('rep-ente');
+  se.innerHTML = ENTI.map(e => '<option value="'+esc(e.id)+'">'+esc(e.nome)+'</option>').join('');
+  const selEnte = document.getElementById('selEnte').value;
+  if(selEnte) se.value = selEnte;
+  const sa = document.getElementById('rep-anno');
+  sa.innerHTML = '';
+  [...document.getElementById('selAnno').options].forEach(o => { const n = document.createElement('option'); n.value = o.value; n.textContent = o.value; sa.appendChild(n); });
+  sa.value = document.getElementById('selAnno').value;
+  document.getElementById('reportMo').classList.add('show');
+}
+function closeReportModal(){ document.getElementById('reportMo').classList.remove('show'); }
+
+// Descrizione discorsiva dell'atto per il report
+function repFraseAtto(a){
+  const org = a.organo === 'DET' ? 'determinazione del Responsabile del Servizio' : 'deliberazione di ' + (a.organo === 'GC' ? 'Giunta Comunale' : 'Consiglio Comunale');
+  let s = org + ' n. ' + a.delN + ' del ' + fmtDate(a.delData);
+  if(a.schemaN) s += ' (schema approvato con deliberazione di Giunta n. ' + a.schemaN + (a.schemaData ? ' del ' + fmtDate(a.schemaData) : '') + ')';
+  const adempimenti = [];
+  if(a.organo === 'GC' && a.richiedeRat && a.ratN) adempimenti.push('ratificata dal Consiglio con deliberazione n. ' + a.ratN + (a.ratData ? ' del ' + fmtDate(a.ratData) : ''));
+  if(a.organo === 'GC' && a.richiedeCom && a.comData) adempimenti.push('comunicata al Consiglio in data ' + fmtDate(a.comData));
+  if(a.richiedeCdC && a.cdcProcData && a.cdcConteData) adempimenti.push('trasmessa alla Procura regionale della Corte dei conti il ' + fmtDate(a.cdcProcData) + ' e caricata sul portale ConTe il ' + fmtDate(a.cdcConteData));
+  if(a.richiedePref && a.prefData) adempimenti.push('comunicata alla Prefettura in data ' + fmtDate(a.prefData));
+  if(a.soggettoPFF && a.pffData) adempimenti.push('trasmessa al Portale del federalismo fiscale in data ' + fmtDate(a.pffData));
+  if(adempimenti.length) s += '. Adempimenti conseguenti: ' + adempimenti.join('; ');
+  if(a.verbN){
+    const es = ESITI[a.esito];
+    s += '. Parere dell\'Organo di revisione: verbale n. ' + a.verbN + (a.verbData ? ' del ' + fmtDate(a.verbData) : '') + (es ? ' — ' + es.label.toLowerCase() : '');
+  }
+  return s + '.';
+}
+
+async function generaReportEnte(){
+  const enteNome = document.getElementById('rep-ente').value;
+  const anno = document.getElementById('rep-anno').value;
+  const conInCorso = document.getElementById('rep-incorso').checked;
+  const integrale = document.getElementById('rep-integrale').checked;
+  if(!enteNome){ alert('Seleziona un ente'); return; }
+
+  // ---- Atti del Fascicolo, in ordine cronologico
+  const atti = ATTI.filter(a => a.ente === enteNome && a.anno === anno)
+    .sort((x,y) => (attoDate(x)||'9999').localeCompare(attoDate(y)||'9999'));
+  const attiApprovati = atti.filter(a => a.delN);
+  const attiAperti = atti.filter(a => !a.delN);
+
+  // ---- Adempimenti dello Scadenziario (best effort: se le liste non ci sono, il report si basa sui soli atti)
+  let svolti = [], inCorso = [];
+  try{
+    const { adempimenti, enti, fasi, comuniFasi } = await loadScadCache();
+    const adeMap = {}; adempimenti.forEach(a => { adeMap[String(a.ID)] = a; });
+    const faseMap = {}; fasi.forEach(f => { faseMap[String(f.ID)] = f; });
+    const dellAnno = ade => !ade.AnnoMese || String(ade.AnnoMese).slice(0,4) === anno || String(ade.DataScadenza||'').slice(0,4) === anno;
+    const nonGestito = s => String(s||'').toLowerCase() === 'non gestito';
+
+    // adempimenti senza fasi
+    enti.filter(r => (r.Comune||'') === enteNome).forEach(r => {
+      const ade = adeMap[String(r.AdempimentoID)];
+      if(!ade || !dellAnno(ade)) return;
+      if(ade.HasFasi === true || ade.HasFasi === 'true') return;
+      if(nonGestito(r.StatoEnte) && !integrale) return;
+      const voce = { titolo: ade.Title || '', data: String(ade.DataScadenza||'').split('T')[0], stato: r.StatoEnte || 'Da Fare', tipologia: ade.Tipologia || '', fase: null };
+      if(String(r.StatoEnte||'').toLowerCase() === 'completato') svolti.push(voce); else inCorso.push(voce);
+    });
+    // adempimenti a fasi
+    comuniFasi.filter(r => (r.Comune||'') === enteNome && r.Attivo !== false).forEach(r => {
+      const ade = adeMap[String(r.AdempimentoID)];
+      const fase = faseMap[String(r.FaseID)];
+      if(!ade || !fase || !dellAnno(ade)) return;
+      if(nonGestito(r.StatoEnte) && !integrale) return;
+      const voce = { titolo: ade.Title || '', data: String(fase.DataScadenzaFase || ade.DataScadenza || '').split('T')[0], stato: r.StatoEnte || 'Da Fare', tipologia: ade.Tipologia || '', fase: fase.Title || '' };
+      if(String(r.StatoEnte||'').toLowerCase() === 'completato') svolti.push(voce); else inCorso.push(voce);
+    });
+    const perData = (a,b) => (a.data||'9999').localeCompare(b.data||'9999');
+    svolti.sort(perData); inCorso.sort(perData);
+  }catch(e){ console.warn('Scadenziario non disponibile per il report:', e.message); }
+
+  // ---- Composizione del testo
+  const oggi = new Date().toLocaleDateString('it-IT');
+  const L = [];
+  L.push('RELAZIONE SULL\'ATTIVITÀ SVOLTA — ESERCIZIO ' + anno);
+  L.push(enteNome);
+  L.push('');
+  L.push('Studio Grismondi srl — documento redatto in data ' + oggi);
+  L.push('');
+  L.push('___________________________________________________________');
+  L.push('');
+  L.push('1. QUADRO DI SINTESI');
+  L.push('');
+  L.push('Atti deliberativi registrati e approvati: ' + attiApprovati.length);
+  if(svolti.length) L.push('Adempimenti e fasi portati a completamento: ' + svolti.length);
+  if(conInCorso && (inCorso.length || attiAperti.length)) L.push('Attività ancora in corso alla data odierna: ' + (inCorso.length + attiAperti.length));
+  L.push('');
+  L.push('___________________________________________________________');
+  L.push('');
+  L.push('2. ATTI DELIBERATIVI E ADEMPIMENTI CONSEGUENTI');
+  L.push('');
+  if(attiApprovati.length === 0){
+    L.push('Nessun atto risulta registrato per l\'esercizio in esame.');
+  } else {
+    const perCat = {};
+    attiApprovati.forEach(a => { (perCat[a.cat] = perCat[a.cat] || []).push(a); });
+    Object.entries(perCat).forEach(([k, lista]) => {
+      const cat = CATEGORIE[k] || CATEGORIE.altro;
+      L.push(cat.label.toUpperCase());
+      lista.forEach(a => {
+        L.push('  • ' + a.oggetto);
+        L.push('    ' + repFraseAtto(a));
+      });
+      L.push('');
+    });
+  }
+  if(svolti.length){
+    L.push('___________________________________________________________');
+    L.push('');
+    L.push('3. ADEMPIMENTI COMPLETATI');
+    L.push('');
+    svolti.forEach(v => {
+      L.push('  • ' + v.titolo + (v.fase ? ' — ' + v.fase : '') + (v.data ? ' (termine: ' + fmtDate(v.data) + ')' : ''));
+    });
+    L.push('');
+  }
+  if(conInCorso && (inCorso.length || attiAperti.length)){
+    L.push('___________________________________________________________');
+    L.push('');
+    L.push((svolti.length ? '4' : '3') + '. ATTIVITÀ IN CORSO');
+    L.push('');
+    attiAperti.forEach(a => {
+      const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
+      L.push('  • ' + a.oggetto + ' (' + cat.label + ') — in attesa di approvazione');
+    });
+    inCorso.forEach(v => {
+      L.push('  • ' + v.titolo + (v.fase ? ' — ' + v.fase : '') + (v.data ? ' (termine: ' + fmtDate(v.data) + ')' : '') + ' — ' + v.stato.toLowerCase());
+    });
+    L.push('');
+  }
+  L.push('___________________________________________________________');
+  L.push('');
+  L.push('Il presente documento riepiloga l\'attività di assistenza contabile');
+  L.push('svolta nell\'esercizio ' + anno + ' sulla base degli atti trasmessi dall\'Ente.');
+  L.push('');
+  L.push('Studio Grismondi srl');
+  if(integrale){ L.push(''); L.push('[VERSIONE INTEGRALE A USO INTERNO — non destinata all\'Ente]'); }
+
+  const testo = L.join('\n');
+  const titolo = 'Relazione attività ' + enteShort(enteNome) + ' ' + anno;
+  const w = window.open('', '_blank');
+  w.document.write('<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>'+esc(titolo)+'</title>'
+    + '<style>body{font-family:Georgia,serif;font-size:13px;line-height:1.75;color:#1a1d23;max-width:820px;margin:0 auto;padding:24px}'
+    + '#txt{white-space:pre-wrap;border:1px solid #ddd;border-radius:8px;padding:26px 30px;background:#fff;min-height:400px}'
+    + '.bar{position:sticky;top:0;background:#fff;padding:10px 0;border-bottom:1px solid #eee;margin-bottom:16px;display:flex;gap:8px;align-items:center}'
+    + 'button{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:sans-serif}'
+    + 'button.alt{background:#475569}small{color:#777;font-family:sans-serif}'
+    + '@media print{.bar{display:none}#txt{border:none;padding:0}body{padding:0}}</style></head><body>'
+    + '<div class="bar"><button onclick="window.print()">🖨️ Stampa / PDF</button>'
+    + '<button class="alt" onclick="navigator.clipboard.writeText(document.getElementById(\'txt\').innerText).then(()=>{this.textContent=\'✅ Copiato!\'})">📋 Copia</button>'
+    + '<small>Testo modificabile: clicca e rifinisci prima di consegnare all\'Ente</small></div>'
+    + '<div id="txt" contenteditable="true"></div></body></html>');
+  w.document.close();
+  w.document.getElementById('txt').textContent = testo;
+  closeReportModal();
+  toast('✅ Report generato — rifiniscilo prima di consegnarlo');
+}
+
+// ============================================================
 // STAMPA / EXPORT (per argomenti flaggati)
 // ============================================================
 function openPrintModal(){
@@ -1808,6 +2012,7 @@ window.addEventListener('load', async function(){
   document.getElementById('btnLogout').addEventListener('click', logout);
   document.getElementById('btnSync').addEventListener('click', loadData);
   document.getElementById('btnExport').addEventListener('click', openPrintModal);
+  document.getElementById('btnReport').addEventListener('click', openReportModal);
   try{
     await msalInstance.initialize();
     const accounts = msalInstance.getAllAccounts();
