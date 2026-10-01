@@ -203,6 +203,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .detail-box.grigio{border-left:3px solid #334155;}
 .kpi.slate{border-left-color:#334155;}.kpi.slate .v{color:#334155;}.kpi.slate.active{outline-color:#334155;background:#f1f5f9;}
 .kpi.red{border-left-color:#b91c1c;}.kpi.red .v{color:#b91c1c;}.kpi.red.active{outline-color:#b91c1c;background:#fef2f2;}
+/* v2.15: ricerca rapida atti */
+.quickbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px;}
+.qs-input{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;}
+.qs-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light);}
+.qs-chips{display:flex;gap:5px;flex-wrap:wrap;}
+.qs-chip{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;transition:all 0.12s;white-space:nowrap;}
+.qs-chip:hover{border-color:var(--primary);color:var(--primary);}
+.qs-chip.on{background:var(--primary);border-color:var(--primary);color:white;}
+.qs-count{font-size:11px;color:var(--text-secondary);font-weight:600;white-space:nowrap;}
+.qs-clear{background:none;border:none;color:var(--primary);font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;}
 .exp-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
 .exp-preset{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
 .exp-preset:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
@@ -254,7 +264,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.13</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.15</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
     <button class="nav-btn" id="btnReport">📄 Report Ente</button>
@@ -271,13 +281,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="search-row">
       <div class="field" style="min-width:260px;flex:2">
         <label>Ente</label>
-        <select id="selEnte" onchange="clearKpiFilter();render()">
+        <select id="selEnte" onchange="clearKpiFilter();qsText='';qsFamiglia='';render()">
           <option value="">— Seleziona Ente —</option>
         </select>
       </div>
       <div class="field" style="max-width:140px">
         <label>Esercizio</label>
-        <select id="selAnno" onchange="render()"></select>
+        <select id="selAnno" onchange="qsText='';qsFamiglia='';render()"></select>
       </div>
       <div class="field">
         <label>Filtro rapido enti</label>
@@ -293,7 +303,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.13 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.15 (BETA — solo Amministratori)</footer>
 </div>
 
 <!-- MODAL REPORT ENTE -->
@@ -548,7 +558,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 // Enti da Scadenziario_Comuni
 // v2: Organo CC/GC, doppio passaggio schema GC→CC, tipi atto
 //     personalizzati, esercizio di competenza, PFF, stampa/export
-// Accesso: SOLO ADMIN_EMAILS (fase beta)
+// Accesso: BETA_SOLO_ADMIN (beta) — poi ruoli Admin/Utente
 // ============================================================
 
 const msalConfig = {
@@ -569,6 +579,13 @@ const LIST_TIPI = 'HUB_FascicoloTipiAtto';
 const LIST_COMUNI = 'Scadenziario_Comuni';
 
 const ADMIN_EMAILS = ['info@studiogrismondisrl.it', 'roberta@studiogrismondisrl.it'];
+
+// v2.14: apertura del Fascicolo allo studio.
+// true  = solo gli ADMIN_EMAILS possono accedere (fase beta attuale)
+// false = accesso a tutto lo studio; i non-admin entrano con ruolo 'Utente'
+//         e NON vedono le funzioni riservate (es. Report per l'Ente)
+const BETA_SOLO_ADMIN = true;
+let userRole = 'Admin';
 
 let currentUser = null, accessToken = null, siteId = null;
 let ENTI = [];   // da Scadenziario_Comuni: {id(nome), nome, prov}
@@ -602,6 +619,7 @@ const ESITI = {
 };
 
 let editId = null, selectedEsito = '', selectedOrgano = 'CC', viewMode = 'compact', kpiFilter = null;
+let qsText = '', qsFamiglia = '';   // v2.15: ricerca rapida atti (testo + famiglia)
 let tipiListOk = false;
 
 const fmtDate = d => { if(!d) return '—'; const p = d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
@@ -655,9 +673,10 @@ async function handleAuth(){
     const tokenResp = await msalInstance.acquireTokenSilent({ ...loginRequest, account: currentUser });
     accessToken = tokenResp.accessToken;
 
-    // CONTROLLO ADMIN — beta riservata
+    // CONTROLLO ACCESSO E RUOLO
     const isAdmin = ADMIN_EMAILS.some(e => e.toLowerCase() === currentUser.username.toLowerCase());
-    if(!isAdmin){
+    userRole = isAdmin ? 'Admin' : 'Utente';
+    if(BETA_SOLO_ADMIN && !isAdmin){
       document.getElementById('deniedBox').style.display = 'block';
       return;
     }
@@ -665,7 +684,10 @@ async function handleAuth(){
     document.getElementById('loginScreen').style.display = 'none';
     const app = document.getElementById('appScreen');
     app.style.display = 'flex';
-    document.getElementById('navUser').innerHTML = '👑 ' + esc(currentUser.name || currentUser.username);
+    document.getElementById('navUser').innerHTML = (isAdmin ? '👑 ' : '👤 ') + esc(currentUser.name || currentUser.username);
+
+    // Funzioni riservate agli amministratori
+    document.getElementById('btnReport').style.display = isAdmin ? '' : 'none';
 
     await loadData();
   }catch(err){
@@ -851,6 +873,62 @@ function filterEnti(){
 }
 
 function setView(v){ viewMode = v; render(); }
+
+// ============================================================
+// v2.15: RICERCA RAPIDA ATTI (testo libero + famiglie)
+// ============================================================
+const FAMIGLIE = {
+  variazioni:  { label: '📝 Variazioni',   test: (k,l) => k.startsWith('variazione') || k === 'variazioni' || l.includes('variazione') },
+  prelievi:    { label: '📌 Prelievi',     test: (k,l) => l.includes('prelievo') || l.includes('fondo di riserva') },
+  bilancio:    { label: '📊 Bilancio/Rendiconto', test: (k,l) => ['bilancio','rendiconto','dup'].includes(k) || l.includes('bilancio di previsione') || l.includes('rendiconto') },
+  equilibri:   { label: '⚖️ Salvaguardia', test: (k,l) => ['salvaguardia_assestamento','salvaguardia','assestamento'].includes(k) || l.includes('salvaguardia') || l.includes('assestamento') },
+  tributi:     { label: '🧾 Tributi',      test: (k,l) => ['imu','tari'].includes(k) || l.includes('imu') || l.includes('tari') || l.includes('aliquot') || l.includes('tribut') },
+  flussi:      { label: '💧 Flussi cassa', test: (k,l) => k.startsWith('flussi') || l.includes('flussi di cassa') },
+  dfb:         { label: '⚖️ DFB',          test: (k,l) => k === 'dfb' || l.includes('debiti fuori bilancio') },
+  pendenti:    { label: '⏳ Con pendenze',  test: null }   // calcolata sull'atto, non sul tipo
+};
+
+function attoHaPendenze(a){
+  return giorniRatifica(a) !== null || comPendente(a) || cdcPendente(a) || prefPendente(a) || pffPendente(a) || !a.delN;
+}
+
+function filtraAtti(lista){
+  let out = lista;
+  if(qsFamiglia){
+    const fam = FAMIGLIE[qsFamiglia];
+    if(fam){
+      out = fam.test
+        ? out.filter(a => { const cat = CATEGORIE[a.cat] || CATEGORIE.altro; return fam.test(a.cat, (cat.label || '').toLowerCase()); })
+        : out.filter(attoHaPendenze);
+    }
+  }
+  const q = qsText.trim().toLowerCase();
+  if(q){
+    out = out.filter(a => {
+      const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
+      const blob = [a.oggetto, cat.label, a.note, a.organo,
+        a.delN ? 'n. '+a.delN : '', a.delData, a.ratN, a.schemaN, a.verbN, a.comN, a.prefN]
+        .filter(Boolean).join(' ').toLowerCase();
+      return q.split(/\s+/).every(w => blob.includes(w));
+    });
+  }
+  return out;
+}
+
+function setQsFamiglia(f){ qsFamiglia = (qsFamiglia === f ? '' : f); render(); }
+function setQsText(v){ qsText = v; render(); }
+function resetQs(){ qsText = ''; qsFamiglia = ''; render(); }
+
+function renderQuickbar(tot, visibili){
+  const chips = Object.entries(FAMIGLIE).map(([k,v]) =>
+    '<button class="qs-chip '+(qsFamiglia===k?'on':'')+'" onclick="setQsFamiglia(\''+k+'\')">'+v.label+'</button>').join('');
+  const attivo = qsText || qsFamiglia;
+  return '<div class="quickbar">'
+    + '<input type="text" class="qs-input" id="qsInput" placeholder="🔍 Cerca per oggetto, n. delibera, note..." value="'+esc(qsText)+'" oninput="setQsText(this.value)">'
+    + '<div class="qs-chips">'+chips+'</div>'
+    + (attivo ? '<span class="qs-count">'+visibili+' di '+tot+'</span><button class="qs-clear" onclick="resetQs()">✕ Azzera</button>' : '')
+    + '</div>';
+}
 function setKpiFilter(f){ kpiFilter = (kpiFilter === f) ? null : f; render(); }
 function clearKpiFilter(){ kpiFilter = null; }
 
@@ -947,6 +1025,9 @@ function render(){
     });
   const tot = atti.length;
 
+  // v2.15: applico la ricerca rapida
+  const visibili = filtraAtti(atti);
+
   toolbarArea.innerHTML = '<div class="toolbar">'
     + '<div class="info">📋 '+tot+' atti — '+esc(ente.nome)+' — '+anno+'</div>'
     + '<div class="toolbar-right">'
@@ -955,13 +1036,24 @@ function render(){
     + '<button class="view-btn '+(viewMode==='cards'?'active':'')+'" onclick="setView(\'cards\')">📋 Dettaglio</button>'
     + '</div>'
     + '<button class="btn btn-primary" onclick="openAdd()">➕ Nuovo Atto</button>'
-    + '</div></div>';
+    + '</div></div>'
+    + (tot > 0 ? renderQuickbar(tot, visibili.length) : '');
+
+  // mantengo il cursore nel campo di ricerca mentre si digita
+  if(qsText){
+    const inp = document.getElementById('qsInput');
+    if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
 
   if(tot === 0){
     attiArea.innerHTML = '<div class="empty"><div class="ic">📭</div><div class="t">Nessun atto per '+anno+'</div><div style="font-size:12px;margin-bottom:16px">Inizia registrando il primo atto deliberativo</div><button class="btn btn-primary" onclick="openAdd()">➕ Registra primo atto</button></div>';
     return;
   }
-  attiArea.innerHTML = viewMode === 'compact' ? renderCompact(atti, false) : renderCards(atti);
+  if(visibili.length === 0){
+    attiArea.innerHTML = '<div class="empty"><div class="ic">🔍</div><div class="t">Nessun atto corrisponde alla ricerca</div><div style="font-size:12px;margin-bottom:16px">Prova a modificare il testo o a togliere il filtro</div><button class="btn" onclick="resetQs()">✕ Azzera ricerca</button></div>';
+    return;
+  }
+  attiArea.innerHTML = viewMode === 'compact' ? renderCompact(visibili, false) : renderCards(visibili);
 }
 
 function renderCompact(atti, showEnte){
@@ -1637,6 +1729,7 @@ async function confermaChiusura(){
 // Le fasi "Non Gestito" restano fuori: sono scelte interne.
 // ============================================================
 function openReportModal(){
+  if(userRole !== 'Admin'){ toast('Funzione riservata agli amministratori', false); return; }
   const se = document.getElementById('rep-ente');
   se.innerHTML = ENTI.map(e => '<option value="'+esc(e.id)+'">'+esc(e.nome)+'</option>').join('');
   const selEnte = document.getElementById('selEnte').value;
@@ -1669,6 +1762,7 @@ function repFraseAtto(a){
 }
 
 async function generaReportEnte(){
+  if(userRole !== 'Admin'){ toast('Funzione riservata agli amministratori', false); return; }
   const enteNome = document.getElementById('rep-ente').value;
   const anno = document.getElementById('rep-anno').value;
   const conInCorso = document.getElementById('rep-incorso').checked;
