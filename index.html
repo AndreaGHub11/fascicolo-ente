@@ -272,7 +272,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.16</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.17</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
     <button class="nav-btn" id="btnReport">📄 Report Ente</button>
@@ -311,7 +311,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.16 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.17 (BETA — solo Amministratori)</footer>
 </div>
 
 <!-- MODAL REPORT ENTE -->
@@ -521,6 +521,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
           <div class="form-group" style="margin-bottom:0"><label>Data comunicazione al CC</label><input type="date" id="f-comData"></div>
         </div>
         <div class="hint" style="margin:8px 0 0">Lascia vuota la data se non ancora comunicato: l'atto sarà segnalato come 📣 da comunicare</div>
+        <label class="gc-toggle prop-style" style="margin-top:12px;margin-bottom:0">
+          <input type="checkbox" id="f-propCom" onchange="togglePropCom()">
+          <div>
+            <div class="gc-lab">📝 Comunicazione già predisposta</div>
+            <div class="gc-sub">Testo pronto, in attesa della seduta del Consiglio</div>
+          </div>
+        </label>
+        <div class="gc-fields prop-fields" id="propComFields" style="margin-top:8px">
+          <div class="form-group" style="margin-bottom:0"><label>Data predisposizione comunicazione</label><input type="date" id="f-propComData"></div>
+        </div>
       </div>
       <label class="gc-toggle cdc-style" id="cdcToggleBox">
         <input type="checkbox" id="f-cdc" onchange="toggleCdC()">
@@ -826,6 +836,8 @@ async function loadData(){
         richiedeCom: organo === 'GC' && boolSP(r.RichiedeComunicazioneCC),
         comN: r.ComunicazioneN || '',
         comData: toDateOnly(r.ComunicazioneData),
+        propCom: boolSP(r.PropostaComPredisposta),
+        propComData: toDateOnly(r.PropostaComData),
         richiedeCdC: boolSP(r.RichiedeCdC),
         cdcProcData: toDateOnly(r.CdCProcuraData),
         cdcConteData: toDateOnly(r.CdCConteData),
@@ -932,7 +944,7 @@ const FAMIGLIE = {
 
 // v2.16: atto con una proposta già predisposta e non ancora deliberata
 function attoHaProposta(a){
-  return (a.proposta && !a.delN) || (a.propRat && a.richiedeRat && !a.ratN);
+  return (a.proposta && !a.delN) || (a.propRat && a.richiedeRat && !a.ratN) || (a.propCom && a.richiedeCom && !a.comData);
 }
 
 function attoHaPendenze(a){
@@ -1033,7 +1045,7 @@ function render(){
       title = '🔶 Ratifiche GC pendenti — tutti gli enti, per urgenza (art. 175 c.4 TUEL)';
       bannerCls = 'gc-style';
     } else if(kpiFilter === 'proposte'){
-      filtered = ATTI.filter(a => attoHaProposta(a)).sort((x,y) => (x.propData||x.propRatData||'').localeCompare(y.propData||y.propRatData||''));
+      filtered = ATTI.filter(a => attoHaProposta(a)).sort((x,y) => (x.propData||x.propRatData||x.propComData||'').localeCompare(y.propData||y.propRatData||y.propComData||''));
       title = '📝 Proposte predisposte in attesa di delibera — tutti gli enti';
       bannerCls = 'orange-style';
     } else if(kpiFilter === 'comunicazioni'){
@@ -1143,8 +1155,9 @@ function renderCompact(atti, showEnte){
       } else { ratCol = '<span class="badge gc">⏳ da ratificare</span>' + (a.propRat ? ' <span class="badge proposta">📝 proposta pronta</span>' : ''); }
     }
     if(a.organo === 'GC' && a.richiedeCom){
-      const comBadge = a.comData ? '<span class="badge com-ok">📣 Com. CC '+(a.comN ? esc(a.comN)+' — ' : '')+fmtDate(a.comData)+'</span>'
+      let comBadge = a.comData ? '<span class="badge com-ok">📣 Com. CC '+(a.comN ? esc(a.comN)+' — ' : '')+fmtDate(a.comData)+'</span>'
                      : (a.delN ? '<span class="badge com-alert">📣 DA COMUNICARE al CC</span>' : '<span class="badge com-ok">📣 com. dopo approv.</span>');
+      if(!a.comData && a.propCom) comBadge += ' <span class="badge proposta">📝 predisposta'+(a.propComData ? ' '+fmtDate(a.propComData) : '')+'</span>';
       ratCol = (ratCol.includes('ct-dash') ? '' : ratCol + ' ') + comBadge;
     }
     let revCol = '<span class="ct-dash">—</span>';
@@ -1231,6 +1244,7 @@ function renderCards(atti){
     if(a.organo === 'GC' && a.richiedeCom){
       badges += a.comData ? '<span class="badge com-ok">📣 Comunicata al CC '+(a.comN ? esc(a.comN)+' — ' : '')+'il '+fmtDate(a.comData)+'</span>'
               : (a.delN ? '<span class="badge com-alert">📣 DA COMUNICARE al CC</span>' : '<span class="badge com-ok">📣 Da comunicare dopo approvazione</span>');
+      if(!a.comData && a.propCom) badges += '<span class="badge proposta">📝 Comunicazione predisposta'+(a.propComData ? ' dal '+fmtDate(a.propComData) : '')+'</span>';
     }
     if(a.soggettoPFF){
       badges += a.pffData ? '<span class="badge pff-ok">📤 PFF trasmessa il '+fmtDate(a.pffData)+'</span>'
@@ -1284,7 +1298,8 @@ function renderCards(atti){
     if(a.organo === 'GC' && a.richiedeCom){
       let cc;
       if(a.comData){ cc = '<div class="detail-val" style="color:#7c3aed">📣 Comunicata al Consiglio il '+fmtDate(a.comData)+'</div><div class="detail-sub">'+(a.comN ? esc(a.comN)+' — ' : '')+'art. 176 TUEL</div>'; }
-      else if(a.delN){ cc = '<div class="detail-val" style="color:#dc2626">📣 DA COMUNICARE al Consiglio Comunale</div><div class="detail-sub">Prelievo/atto GC da comunicare nei termini del regolamento di contabilità — art. 176 TUEL</div>'; }
+      else if(a.delN){ cc = '<div class="detail-val" style="color:#dc2626">📣 DA COMUNICARE al Consiglio Comunale</div><div class="detail-sub">Prelievo/atto GC da comunicare nei termini del regolamento di contabilità — art. 176 TUEL</div>'
+        + (a.propCom ? '<div class="detail-sub" style="color:#a16207;font-weight:700">📝 Comunicazione già predisposta'+(a.propComData ? ' il '+fmtDate(a.propComData) : '')+' — in attesa della seduta</div>' : ''); }
       else{ cc = '<div class="detail-val" style="color:#9ca0ad">In attesa di approvazione della delibera GC</div>'; }
       comBox = '<div class="detail-box viola"><div class="detail-label">📣 Comunicazione al Consiglio Comunale (art. 176 TUEL)</div>'+cc+'</div>';
     }
@@ -1402,6 +1417,10 @@ function toggleProposta(){
 
 function togglePropRat(){
   document.getElementById('propRatFields').classList.toggle('show', document.getElementById('f-propRat').checked);
+}
+
+function togglePropCom(){
+  document.getElementById('propComFields').classList.toggle('show', document.getElementById('f-propCom').checked);
 }
 
 async function catChanged(){
@@ -1525,8 +1544,9 @@ function openAdd(){
   document.getElementById('f-pff').checked = false;
   document.getElementById('f-proposta').checked = false;
   document.getElementById('f-propRat').checked = false;
-  toggleRatifica(); toggleSchema(); toggleComunica(); toggleCdC(); togglePref(); togglePFF(); toggleProposta(); togglePropRat();
-  ['f-schemaN','f-schemaData','f-delN','f-delData','f-regGen','f-propData','f-ratN','f-ratData','f-propRatData','f-comN','f-comData','f-cdcProc','f-cdcConte','f-prefN','f-prefData','f-verbN','f-verbData','f-pffData','f-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-propCom').checked = false;
+  toggleRatifica(); toggleSchema(); toggleComunica(); toggleCdC(); togglePref(); togglePFF(); toggleProposta(); togglePropRat(); togglePropCom();
+  ['f-schemaN','f-schemaData','f-delN','f-delData','f-regGen','f-propData','f-ratN','f-ratData','f-propRatData','f-comN','f-comData','f-propComData','f-cdcProc','f-cdcConte','f-prefN','f-prefData','f-verbN','f-verbData','f-pffData','f-note'].forEach(id => document.getElementById(id).value = '');
   renderEsitoPicker();
   document.getElementById('mo').classList.add('show');
   requestAnimationFrame(autosizeOggetto);
@@ -1562,6 +1582,9 @@ function openEdit(id){
   document.getElementById('f-propRatData').value = a.propRatData;
   document.getElementById('f-comN').value = a.comN;
   document.getElementById('f-comData').value = a.comData;
+  document.getElementById('f-propCom').checked = !!a.propCom;
+  togglePropCom();
+  document.getElementById('f-propComData').value = a.propComData;
   document.getElementById('f-cdc').checked = !!a.richiedeCdC;
   toggleCdC();
   document.getElementById('f-cdcProc').value = a.cdcProcData;
@@ -1617,6 +1640,8 @@ async function saveAtto(){
     RichiedeComunicazioneCC: isComCC,
     ComunicazioneN: isComCC ? document.getElementById('f-comN').value.trim() : '',
     ComunicazioneData: isComCC ? dOrNull(document.getElementById('f-comData').value) : null,
+    PropostaComPredisposta: (isComCC && !document.getElementById('f-comData').value) ? document.getElementById('f-propCom').checked : false,
+    PropostaComData: (isComCC && !document.getElementById('f-comData').value && document.getElementById('f-propCom').checked) ? dOrNull(document.getElementById('f-propComData').value) : null,
     RichiedeCdC: document.getElementById('f-cdc').checked,
     CdCProcuraData: document.getElementById('f-cdc').checked ? dOrNull(document.getElementById('f-cdcProc').value) : null,
     CdCConteData: document.getElementById('f-cdc').checked ? dOrNull(document.getElementById('f-cdcConte').value) : null,
@@ -2069,7 +2094,7 @@ function doPrint(){
     const schema = a.schemaN ? ('GC n. '+a.schemaN+' del '+fmtDate(a.schemaData)) : '—';
     let rat = a.ratN ? ('CC n. '+a.ratN+' del '+fmtDate(a.ratData)) : (a.richiedeRat ? ('da ratificare'+(a.propRat ? ' (proposta pronta)' : '')) : '—');
     if(a.richiedeCom){
-      const com = a.comData ? ('Com. CC '+fmtDate(a.comData)) : (a.delN ? 'DA COMUNICARE al CC' : 'com. dopo approv.');
+      const com = a.comData ? ('Com. CC '+fmtDate(a.comData)) : (a.delN ? ('DA COMUNICARE al CC'+(a.propCom ? ' (predisposta)' : '')) : 'com. dopo approv.');
       rat = (rat === '—' ? '' : rat + ' / ') + com;
     }
     const verb = a.verbN ? ('n. '+a.verbN+' del '+fmtDate(a.verbData)) : '—';
@@ -2101,7 +2126,7 @@ function doExportCSV(){
   if(!exp) return;
   const { rows, anno, scopeLabel } = exp;
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
-  const head = ['Ente','Esercizio','Tipo Atto','Oggetto','Organo','Schema GC N','Schema GC Data','Delibera N','Registro Generale N','Delibera Data','Proposta predisposta','Proposta Data','Ratifica N','Ratifica Data','Proposta ratifica','Proposta ratifica Data','Comunicazione CC Rif','Comunicazione CC Data','Verbale N','Verbale Data','Esito Parere','Soggetto PFF','Data PFF','Soggetto CdC','CdC Procura Data','CdC ConTe Data','Soggetto Prefettura','Prefettura Rif','Prefettura Data','Note'];
+  const head = ['Ente','Esercizio','Tipo Atto','Oggetto','Organo','Schema GC N','Schema GC Data','Delibera N','Registro Generale N','Delibera Data','Proposta predisposta','Proposta Data','Ratifica N','Ratifica Data','Proposta ratifica','Proposta ratifica Data','Comunicazione CC Rif','Comunicazione CC Data','Com. predisposta','Com. predisposta Data','Verbale N','Verbale Data','Esito Parere','Soggetto PFF','Data PFF','Soggetto CdC','CdC Procura Data','CdC ConTe Data','Soggetto Prefettura','Prefettura Rif','Prefettura Data','Note'];
   const lines = [head.map(q).join(';')];
   rows.forEach(a => {
     const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
@@ -2114,6 +2139,7 @@ function doExportCSV(){
       a.ratN, a.ratData ? fmtDate(a.ratData) : '',
       a.propRat ? 'Sì' : '', a.propRatData ? fmtDate(a.propRatData) : '',
       a.comN, a.comData ? fmtDate(a.comData) : (comPendente(a) ? 'DA COMUNICARE' : ''),
+      a.propCom ? 'Sì' : '', a.propComData ? fmtDate(a.propComData) : '',
       a.verbN, a.verbData ? fmtDate(a.verbData) : '',
       esito ? esito.label : '',
       a.soggettoPFF ? 'Sì' : 'No',
