@@ -203,6 +203,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .detail-box.grigio{border-left:3px solid #334155;}
 .kpi.slate{border-left-color:#334155;}.kpi.slate .v{color:#334155;}.kpi.slate.active{outline-color:#334155;background:#f1f5f9;}
 .kpi.red{border-left-color:#b91c1c;}.kpi.red .v{color:#b91c1c;}.kpi.red.active{outline-color:#b91c1c;background:#fef2f2;}
+/* v2.16: proposta predisposta */
+.gc-toggle.prop-style{background:#fefce8;border-color:#fde68a;}
+.gc-toggle.prop-style input{accent-color:#a16207;}
+.gc-toggle.prop-style .gc-lab{color:#a16207;}
+.gc-toggle.prop-style .gc-sub{color:#854d0e;}
+.gc-fields.prop-fields{background:#fefce8;border-color:#fcd34d;}
+.badge.proposta{background:#fef9c3;color:#854d0e;}
+.detail-box.giallo{border-left:3px solid #a16207;}
 /* v2.15: ricerca rapida atti */
 .quickbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:white;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px;}
 .qs-input{flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Sans',sans-serif;}
@@ -264,7 +272,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="brand-text">PA CLOUD PRO</div>
     <div class="brand-sub">Studio Grismondi srl</div>
   </div>
-  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.15</span></div>
+  <div class="nav-tab-active">🏛️ Fascicolo Ente<span class="beta-pill">BETA</span><span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:5px;letter-spacing:0.5px;">v2.16</span></div>
   <div class="nav-right">
     <div class="nav-user" id="navUser"></div>
     <button class="nav-btn" id="btnReport">📄 Report Ente</button>
@@ -303,7 +311,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div id="attiArea"></div>
 </div>
 
-<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.15 (BETA — solo Amministratori)</footer>
+<footer class="app-footer">© 2026 Studio Grismondi srl — PA CLOUD PRO — Fascicolo Ente v2.16 (BETA — solo Amministratori)</footer>
 </div>
 
 <!-- MODAL REPORT ENTE -->
@@ -470,12 +478,40 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="form-group"><label id="delNLabel">N° Delibera</label><input type="text" id="f-delN" placeholder="es: 42"></div>
         <div class="form-group"><label>Data Delibera</label><input type="date" id="f-delData"></div>
       </div>
+      <div class="form-group" id="rgBox" style="display:none">
+        <label>N° Registro Generale <span style="font-weight:400;color:var(--text-secondary)">— facoltativo</span></label>
+        <input type="text" id="f-regGen" placeholder="es: 452">
+        <div class="hint" style="margin-top:6px">💡 Per le determine: sopra il numero settoriale, qui il numero di registro generale</div>
+      </div>
       <div class="hint">💡 Lascia vuoto se l'atto non è ancora stato approvato — potrai completarlo dopo</div>
+      <label class="gc-toggle prop-style" id="propToggleBox">
+        <input type="checkbox" id="f-proposta" onchange="toggleProposta()">
+        <div>
+          <div class="gc-lab">📝 Proposta già predisposta (atto non ancora deliberato)</div>
+          <div class="gc-sub">Spunta quando hai preparato proposta e parere ma l'organo deve ancora deliberare</div>
+        </div>
+      </label>
+      <div class="gc-fields prop-fields" id="propFields">
+        <div class="form-row">
+          <div class="form-group" style="margin-bottom:0"><label>Data predisposizione proposta</label><input type="date" id="f-propData"></div>
+          <div class="form-group" style="margin-bottom:0;display:flex;align-items:flex-end"><div class="hint" style="margin:0">Quando inserirai numero e data dell'atto deliberato, la segnalazione sparirà da sola</div></div>
+        </div>
+      </div>
       <div class="gc-fields" id="gcFields">
         <div style="font-size:11px;font-weight:700;color:var(--gc);margin-bottom:10px">⚖️ Ratifica del Consiglio Comunale (entro 60 gg dalla delibera GC)</div>
         <div class="form-row">
           <div class="form-group" style="margin-bottom:0"><label>N° Delibera CC di ratifica</label><input type="text" id="f-ratN" placeholder="es: 31"></div>
           <div class="form-group" style="margin-bottom:0"><label>Data Ratifica</label><input type="date" id="f-ratData"></div>
+        </div>
+        <label class="gc-toggle prop-style" style="margin-top:12px;margin-bottom:0">
+          <input type="checkbox" id="f-propRat" onchange="togglePropRat()">
+          <div>
+            <div class="gc-lab">📝 Proposta di ratifica già predisposta</div>
+            <div class="gc-sub">Proposta e parere pronti, in attesa della seduta del Consiglio</div>
+          </div>
+        </label>
+        <div class="gc-fields prop-fields" id="propRatFields" style="margin-top:8px">
+          <div class="form-group" style="margin-bottom:0"><label>Data predisposizione proposta di ratifica</label><input type="date" id="f-propRatData"></div>
         </div>
       </div>
       <div class="gc-fields com-fields" id="comFields">
@@ -800,6 +836,11 @@ async function loadData(){
         schemaData: toDateOnly(r.SchemaGCData),
         delN: r.DeliberaN || '',
         delData: toDateOnly(r.DeliberaData),
+        regGen: r.RegistroGeneraleN || '',
+        proposta: boolSP(r.PropostaPredisposta),
+        propData: toDateOnly(r.PropostaData),
+        propRat: boolSP(r.PropostaRatPredisposta),
+        propRatData: toDateOnly(r.PropostaRatData),
         ratN: r.RatificaN || '',
         ratData: toDateOnly(r.RatificaData),
         verbN: r.VerbaleN || '',
@@ -885,8 +926,14 @@ const FAMIGLIE = {
   tributi:     { label: '🧾 Tributi',      test: (k,l) => ['imu','tari'].includes(k) || l.includes('imu') || l.includes('tari') || l.includes('aliquot') || l.includes('tribut') },
   flussi:      { label: '💧 Flussi cassa', test: (k,l) => k.startsWith('flussi') || l.includes('flussi di cassa') },
   dfb:         { label: '⚖️ DFB',          test: (k,l) => k === 'dfb' || l.includes('debiti fuori bilancio') },
-  pendenti:    { label: '⏳ Con pendenze',  test: null }   // calcolata sull'atto, non sul tipo
+  pendenti:    { label: '⏳ Con pendenze',  test: null },  // calcolata sull'atto, non sul tipo
+  proposte:    { label: '📝 Proposte pronte', test: null } // atti con proposta predisposta in attesa di delibera
 };
+
+// v2.16: atto con una proposta già predisposta e non ancora deliberata
+function attoHaProposta(a){
+  return (a.proposta && !a.delN) || (a.propRat && a.richiedeRat && !a.ratN);
+}
 
 function attoHaPendenze(a){
   return giorniRatifica(a) !== null || comPendente(a) || cdcPendente(a) || prefPendente(a) || pffPendente(a) || !a.delN;
@@ -899,7 +946,7 @@ function filtraAtti(lista){
     if(fam){
       out = fam.test
         ? out.filter(a => { const cat = CATEGORIE[a.cat] || CATEGORIE.altro; return fam.test(a.cat, (cat.label || '').toLowerCase()); })
-        : out.filter(attoHaPendenze);
+        : out.filter(qsFamiglia === 'proposte' ? attoHaProposta : attoHaPendenze);
     }
   }
   const q = qsText.trim().toLowerCase();
@@ -907,7 +954,7 @@ function filtraAtti(lista){
     out = out.filter(a => {
       const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
       const blob = [a.oggetto, cat.label, a.note, a.organo,
-        a.delN ? 'n. '+a.delN : '', a.delData, a.ratN, a.schemaN, a.verbN, a.comN, a.prefN]
+        a.delN ? 'n. '+a.delN : '', a.regGen ? 'rg '+a.regGen : '', a.delData, a.ratN, a.schemaN, a.verbN, a.comN, a.prefN]
         .filter(Boolean).join(' ').toLowerCase();
       return q.split(/\s+/).every(w => blob.includes(w));
     });
@@ -950,6 +997,7 @@ function render(){
   const gComunicazioni = ATTI.filter(a => comPendente(a)).length;
   const gCdC = ATTI.filter(a => cdcPendente(a)).length;
   const gPref = ATTI.filter(a => prefPendente(a)).length;
+  const gProposte = ATTI.filter(a => attoHaProposta(a)).length;
 
   let kpiHtml = '<div class="kpi-title">🌍 Panoramica generale — tutti gli enti</div>'
     + '<div class="kpi-grid">'
@@ -957,6 +1005,7 @@ function render(){
     + '<div class="kpi purple '+(kpiFilter==='comunicazioni'?'active':'')+'" onclick="setKpiFilter(\'comunicazioni\')"><div class="v">'+gComunicazioni+'</div><div class="l">📣 Comunicazioni CC pendenti</div><div class="hint-click">👆 clicca per elenco</div></div>'
     + '<div class="kpi red '+(kpiFilter==='cdc'?'active':'')+'" onclick="setKpiFilter(\'cdc\')"><div class="v">'+gCdC+'</div><div class="l">⚖️ Corte dei Conti pendenti</div><div class="hint-click">👆 clicca per elenco</div></div>'
     + '<div class="kpi slate '+(kpiFilter==='prefettura'?'active':'')+'" onclick="setKpiFilter(\'prefettura\')"><div class="v">'+gPref+'</div><div class="l">🏢 Prefettura pendenti</div><div class="hint-click">👆 clicca per elenco</div></div>'
+    + '<div class="kpi orange '+(kpiFilter==='proposte'?'active':'')+'" onclick="setKpiFilter(\'proposte\')"><div class="v">'+gProposte+'</div><div class="l">📝 Proposte in attesa di delibera</div><div class="hint-click">👆 clicca per elenco</div></div>'
     + '<div class="kpi '+(kpiFilter==='attesa'?'active':'')+'" onclick="setKpiFilter(\'attesa\')"><div class="v">'+gAttesa+'</div><div class="l">In attesa approvazione ('+anno+')</div><div class="hint-click">👆 clicca per elenco</div></div>'
     + '</div>';
 
@@ -983,6 +1032,10 @@ function render(){
       filtered = ATTI.filter(a => giorniRatifica(a) !== null).sort((a,b) => giorniRatifica(a) - giorniRatifica(b));
       title = '🔶 Ratifiche GC pendenti — tutti gli enti, per urgenza (art. 175 c.4 TUEL)';
       bannerCls = 'gc-style';
+    } else if(kpiFilter === 'proposte'){
+      filtered = ATTI.filter(a => attoHaProposta(a)).sort((x,y) => (x.propData||x.propRatData||'').localeCompare(y.propData||y.propRatData||''));
+      title = '📝 Proposte predisposte in attesa di delibera — tutti gli enti';
+      bannerCls = 'orange-style';
     } else if(kpiFilter === 'comunicazioni'){
       filtered = ATTI.filter(a => comPendente(a)).sort((x,y) => (x.delData||'').localeCompare(y.delData||''));
       title = '📣 Comunicazioni al CC pendenti — tutti gli enti, dalla più datata (art. 176 TUEL)';
@@ -1064,10 +1117,16 @@ function renderCompact(atti, showEnte){
     const gg = giorniRatifica(a);
 
     let delCol;
-    if(!a.delN){ delCol = '<span class="badge pending">⏳ Da approvare</span>'; }
+    if(!a.delN){
+      delCol = a.proposta
+        ? '<span class="badge proposta">📝 Proposta pronta'+(a.propData ? ' '+fmtDate(a.propData) : '')+'</span>'
+        : '<span class="badge pending">⏳ Da approvare</span>';
+    }
     else{
       const orgCls = a.organo === 'GC' ? 'gc' : (a.organo === 'DET' ? 'det' : 'delibera');
-      delCol = '<span class="badge '+orgCls+'">'+a.organo+'</span> <span class="ct-num">n. '+esc(a.delN)+'</span> <span class="ct-date">'+fmtDate(a.delData)+'</span>';
+      delCol = '<span class="badge '+orgCls+'">'+a.organo+'</span> <span class="ct-num">n. '+esc(a.delN)+'</span>'
+        + (a.regGen ? ' <span class="ct-date">(RG '+esc(a.regGen)+')</span>' : '')
+        + ' <span class="ct-date">'+fmtDate(a.delData)+'</span>';
     }
     let ratCol = '<span class="ct-dash">—</span>';
     if(a.schemaN){
@@ -1079,7 +1138,9 @@ function renderCompact(atti, showEnte){
         ratCol = gg < 0 ? '<span class="badge gc-alert">⛔ SCADUTA ('+Math.abs(gg)+'gg fa)</span>'
                : gg <= 15 ? '<span class="badge gc-alert">🔥 '+gg+'gg rimasti</span>'
                : '<span class="badge gc">⏳ entro '+gg+'gg</span>';
-      } else { ratCol = '<span class="badge gc">⏳ da ratificare</span>'; }
+        // v2.16: segnalo se la proposta di ratifica è già stata predisposta
+        if(a.propRat) ratCol += ' <span class="badge proposta">📝 proposta pronta'+(a.propRatData ? ' '+fmtDate(a.propRatData) : '')+'</span>';
+      } else { ratCol = '<span class="badge gc">⏳ da ratificare</span>' + (a.propRat ? ' <span class="badge proposta">📝 proposta pronta</span>' : ''); }
     }
     if(a.organo === 'GC' && a.richiedeCom){
       const comBadge = a.comData ? '<span class="badge com-ok">📣 Com. CC '+(a.comN ? esc(a.comN)+' — ' : '')+fmtDate(a.comData)+'</span>'
@@ -1147,10 +1208,18 @@ function renderCards(atti){
     const gg = giorniRatifica(a);
 
     let badges = '';
-    if(pending){ badges += '<span class="badge pending">⏳ Da approvare</span>'; }
+    const rgTxt = a.regGen ? ' (RG n. '+esc(a.regGen)+')' : '';
+    if(pending){
+      badges += a.proposta
+        ? '<span class="badge proposta">📝 Proposta predisposta'+(a.propData ? ' il '+fmtDate(a.propData) : '')+' — in attesa di delibera</span>'
+        : '<span class="badge pending">⏳ Da approvare</span>';
+    }
     else if(a.organo === 'GC'){ badges += '<span class="badge gc">🔶 Delibera GC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
-    else if(a.organo === 'DET'){ badges += '<span class="badge det">🖊️ Determina n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
+    else if(a.organo === 'DET'){ badges += '<span class="badge det">🖊️ Determina n. '+esc(a.delN)+rgTxt+' del '+fmtDate(a.delData)+'</span>'; }
     else{ badges += '<span class="badge delibera">Delibera CC n. '+esc(a.delN)+' del '+fmtDate(a.delData)+'</span>'; }
+    if(a.organo === 'GC' && a.richiedeRat && !a.ratN && a.propRat){
+      badges += '<span class="badge proposta">📝 Proposta di ratifica pronta'+(a.propRatData ? ' dal '+fmtDate(a.propRatData) : '')+'</span>';
+    }
     if(a.schemaN){ badges += '<span class="badge schema">🔁 Schema GC n. '+esc(a.schemaN)+' del '+fmtDate(a.schemaData)+'</span>'; }
     if(a.organo === 'GC' && a.richiedeRat && a.ratN){ badges += '<span class="badge fav">✅ Ratificata CC n. '+esc(a.ratN)+' del '+fmtDate(a.ratData)+'</span>'; }
     else if(gg !== null){
@@ -1223,10 +1292,11 @@ function renderCards(atti){
     let gcBox = '';
     if(a.organo === 'GC' && a.richiedeRat){
       let rc;
+      const propNota = a.propRat ? '<div class="detail-sub" style="color:#a16207;font-weight:700">📝 Proposta di ratifica già predisposta'+(a.propRatData ? ' il '+fmtDate(a.propRatData) : '')+' — manca solo la delibera consiliare</div>' : '';
       if(a.ratN){ rc = '<div class="detail-val">Ratificata con Delibera CC n. '+esc(a.ratN)+'</div><div class="detail-sub">Data: '+fmtDate(a.ratData)+'</div>'; }
-      else if(gg !== null && gg < 0){ rc = '<div class="detail-val" style="color:#dc2626">⛔ Termine ratifica SCADUTO da '+Math.abs(gg)+' giorni</div><div class="detail-sub">La delibera GC decade se non ratificata nei 60 gg — verificare</div>'; }
-      else if(gg !== null){ rc = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare — restano '+gg+' giorni</div><div class="detail-sub">Termine: 60 gg dalla delibera GC (art. 175 c.4 TUEL)</div>'; }
-      else { rc = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare in CC</div>'; }
+      else if(gg !== null && gg < 0){ rc = '<div class="detail-val" style="color:#dc2626">⛔ Termine ratifica SCADUTO da '+Math.abs(gg)+' giorni</div><div class="detail-sub">La delibera GC decade se non ratificata nei 60 gg — verificare</div>'+propNota; }
+      else if(gg !== null){ rc = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare — restano '+gg+' giorni</div><div class="detail-sub">Termine: 60 gg dalla delibera GC (art. 175 c.4 TUEL)</div>'+propNota; }
+      else { rc = '<div class="detail-val" style="color:#ea580c">⏳ Da ratificare in CC</div>'+propNota; }
       gcBox = '<div class="detail-box arancio"><div class="detail-label">🔶 Variazione urgente GC — Ratifica Consiglio (art. 175 c.4 TUEL)</div>'+rc+'</div>';
     }
 
@@ -1240,8 +1310,13 @@ function renderCards(atti){
       + '</div><span class="chevron">▼</span></div>'
       + '<div class="atto-detail"><div class="detail-grid">'
       + '<div class="detail-box blu"><div class="detail-label">'+(a.organo==='GC'?'🔶 Delibera Giunta Comunale':(a.organo==='DET'?'🖊️ Determina del Responsabile del Servizio':'📜 Delibera Consiglio Comunale'))+'</div>'
-      + (pending ? '<div class="detail-val" style="color:#c2410c">⏳ In attesa di approvazione</div>'
-                 : '<div class="detail-val">'+(a.organo==='DET'?'Determina':'Delibera '+a.organo)+' n. '+esc(a.delN)+'</div><div class="detail-sub">Data: '+fmtDate(a.delData)+'</div>')
+      + (pending
+          ? (a.proposta
+              ? '<div class="detail-val" style="color:#a16207">📝 Proposta predisposta'+(a.propData ? ' il '+fmtDate(a.propData) : '')+'</div><div class="detail-sub">In attesa della seduta: resta da inserire numero e data dell\'atto</div>'
+              : '<div class="detail-val" style="color:#c2410c">⏳ In attesa di approvazione</div>')
+          : '<div class="detail-val">'+(a.organo==='DET'?'Determina':'Delibera '+a.organo)+' n. '+esc(a.delN)+'</div>'
+            + (a.regGen ? '<div class="detail-sub">Registro generale n. '+esc(a.regGen)+'</div>' : '')
+            + '<div class="detail-sub">Data: '+fmtDate(a.delData)+'</div>')
       + '</div>'
       + '<div class="detail-box verde"><div class="detail-label">📝 Parere Organo di Revisione</div>'
       + (a.verbN ? '<div class="detail-val">Verbale n. '+esc(a.verbN)+'</div><div class="detail-sub">Data: '+fmtDate(a.verbData)+'</div>'
@@ -1289,7 +1364,9 @@ function setOrgano(org){
   if(org !== 'CC'){ document.getElementById('f-schema').checked = false; }
   toggleRatifica(); toggleSchema(); toggleComunica();
   document.getElementById('sepDelLabel').textContent = org === 'GC' ? '🔶 Delibera Giunta Comunale' : (org === 'DET' ? '🖊️ Determina del Responsabile del Servizio' : '📜 Delibera Consiglio Comunale');
-  document.getElementById('delNLabel').textContent = org === 'GC' ? 'N° Delibera GC' : (org === 'DET' ? 'N° Determina' : 'N° Delibera CC');
+  document.getElementById('delNLabel').textContent = org === 'GC' ? 'N° Delibera GC' : (org === 'DET' ? 'N° Determina (settoriale)' : 'N° Delibera CC');
+  // v2.16: registro generale solo per le determine
+  document.getElementById('rgBox').style.display = org === 'DET' ? '' : 'none';
 }
 
 function toggleComunica(){
@@ -1317,6 +1394,14 @@ function toggleCdC(){
 
 function togglePref(){
   document.getElementById('prefFields').classList.toggle('show', document.getElementById('f-pref').checked);
+}
+
+function toggleProposta(){
+  document.getElementById('propFields').classList.toggle('show', document.getElementById('f-proposta').checked);
+}
+
+function togglePropRat(){
+  document.getElementById('propRatFields').classList.toggle('show', document.getElementById('f-propRat').checked);
 }
 
 async function catChanged(){
@@ -1438,8 +1523,10 @@ function openAdd(){
   document.getElementById('f-cdc').checked = false;
   document.getElementById('f-pref').checked = false;
   document.getElementById('f-pff').checked = false;
-  toggleRatifica(); toggleSchema(); toggleComunica(); toggleCdC(); togglePref(); togglePFF();
-  ['f-schemaN','f-schemaData','f-delN','f-delData','f-ratN','f-ratData','f-comN','f-comData','f-cdcProc','f-cdcConte','f-prefN','f-prefData','f-verbN','f-verbData','f-pffData','f-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-proposta').checked = false;
+  document.getElementById('f-propRat').checked = false;
+  toggleRatifica(); toggleSchema(); toggleComunica(); toggleCdC(); togglePref(); togglePFF(); toggleProposta(); togglePropRat();
+  ['f-schemaN','f-schemaData','f-delN','f-delData','f-regGen','f-propData','f-ratN','f-ratData','f-propRatData','f-comN','f-comData','f-cdcProc','f-cdcConte','f-prefN','f-prefData','f-verbN','f-verbData','f-pffData','f-note'].forEach(id => document.getElementById(id).value = '');
   renderEsitoPicker();
   document.getElementById('mo').classList.add('show');
   requestAnimationFrame(autosizeOggetto);
@@ -1464,8 +1551,15 @@ function openEdit(id){
   document.getElementById('f-schemaData').value = a.schemaData;
   document.getElementById('f-delN').value = a.delN;
   document.getElementById('f-delData').value = a.delData;
+  document.getElementById('f-regGen').value = a.regGen;
+  document.getElementById('f-proposta').checked = !!a.proposta;
+  toggleProposta();
+  document.getElementById('f-propData').value = a.propData;
   document.getElementById('f-ratN').value = a.ratN;
   document.getElementById('f-ratData').value = a.ratData;
+  document.getElementById('f-propRat').checked = !!a.propRat;
+  togglePropRat();
+  document.getElementById('f-propRatData').value = a.propRatData;
   document.getElementById('f-comN').value = a.comN;
   document.getElementById('f-comData').value = a.comData;
   document.getElementById('f-cdc').checked = !!a.richiedeCdC;
@@ -1512,8 +1606,14 @@ async function saveAtto(){
     SchemaGCData: hasSchema ? dOrNull(document.getElementById('f-schemaData').value) : null,
     DeliberaN: document.getElementById('f-delN').value.trim(),
     DeliberaData: dOrNull(document.getElementById('f-delData').value),
+    RegistroGeneraleN: selectedOrgano === 'DET' ? document.getElementById('f-regGen').value.trim() : '',
+    // v2.16: la proposta decade quando l'atto risulta deliberato
+    PropostaPredisposta: document.getElementById('f-delN').value.trim() ? false : document.getElementById('f-proposta').checked,
+    PropostaData: (!document.getElementById('f-delN').value.trim() && document.getElementById('f-proposta').checked) ? dOrNull(document.getElementById('f-propData').value) : null,
     RatificaN: isGCUrgente ? document.getElementById('f-ratN').value.trim() : '',
     RatificaData: isGCUrgente ? dOrNull(document.getElementById('f-ratData').value) : null,
+    PropostaRatPredisposta: (isGCUrgente && !document.getElementById('f-ratN').value.trim()) ? document.getElementById('f-propRat').checked : false,
+    PropostaRatData: (isGCUrgente && !document.getElementById('f-ratN').value.trim() && document.getElementById('f-propRat').checked) ? dOrNull(document.getElementById('f-propRatData').value) : null,
     RichiedeComunicazioneCC: isComCC,
     ComunicazioneN: isComCC ? document.getElementById('f-comN').value.trim() : '',
     ComunicazioneData: isComCC ? dOrNull(document.getElementById('f-comData').value) : null,
@@ -1745,7 +1845,7 @@ function closeReportModal(){ document.getElementById('reportMo').classList.remov
 // Descrizione discorsiva dell'atto per il report
 function repFraseAtto(a){
   const org = a.organo === 'DET' ? 'determinazione del Responsabile del Servizio' : 'deliberazione di ' + (a.organo === 'GC' ? 'Giunta Comunale' : 'Consiglio Comunale');
-  let s = org + ' n. ' + a.delN + ' del ' + fmtDate(a.delData);
+  let s = org + ' n. ' + a.delN + (a.regGen ? ' (reg. gen. n. ' + a.regGen + ')' : '') + ' del ' + fmtDate(a.delData);
   if(a.schemaN) s += ' (schema approvato con deliberazione di Giunta n. ' + a.schemaN + (a.schemaData ? ' del ' + fmtDate(a.schemaData) : '') + ')';
   const adempimenti = [];
   if(a.organo === 'GC' && a.richiedeRat && a.ratN) adempimenti.push('ratificata dal Consiglio con deliberazione n. ' + a.ratN + (a.ratData ? ' del ' + fmtDate(a.ratData) : ''));
@@ -1963,9 +2063,11 @@ function doPrint(){
     const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
     const esito = ESITI[a.esito];
     const orgLabel = a.organo === 'DET' ? 'Det. Resp.' : a.organo;
-    const del = a.delN ? (orgLabel+' n. '+a.delN+' del '+fmtDate(a.delData)) : 'Da approvare';
+    const del = a.delN
+      ? (orgLabel+' n. '+a.delN+(a.regGen ? ' (RG '+a.regGen+')' : '')+' del '+fmtDate(a.delData))
+      : (a.proposta ? 'Proposta predisposta'+(a.propData ? ' il '+fmtDate(a.propData) : '') : 'Da approvare');
     const schema = a.schemaN ? ('GC n. '+a.schemaN+' del '+fmtDate(a.schemaData)) : '—';
-    let rat = a.ratN ? ('CC n. '+a.ratN+' del '+fmtDate(a.ratData)) : (a.richiedeRat ? 'da ratificare' : '—');
+    let rat = a.ratN ? ('CC n. '+a.ratN+' del '+fmtDate(a.ratData)) : (a.richiedeRat ? ('da ratificare'+(a.propRat ? ' (proposta pronta)' : '')) : '—');
     if(a.richiedeCom){
       const com = a.comData ? ('Com. CC '+fmtDate(a.comData)) : (a.delN ? 'DA COMUNICARE al CC' : 'com. dopo approv.');
       rat = (rat === '—' ? '' : rat + ' / ') + com;
@@ -1999,7 +2101,7 @@ function doExportCSV(){
   if(!exp) return;
   const { rows, anno, scopeLabel } = exp;
   const q = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
-  const head = ['Ente','Esercizio','Tipo Atto','Oggetto','Organo','Schema GC N','Schema GC Data','Delibera N','Delibera Data','Ratifica N','Ratifica Data','Comunicazione CC Rif','Comunicazione CC Data','Verbale N','Verbale Data','Esito Parere','Soggetto PFF','Data PFF','Soggetto CdC','CdC Procura Data','CdC ConTe Data','Soggetto Prefettura','Prefettura Rif','Prefettura Data','Note'];
+  const head = ['Ente','Esercizio','Tipo Atto','Oggetto','Organo','Schema GC N','Schema GC Data','Delibera N','Registro Generale N','Delibera Data','Proposta predisposta','Proposta Data','Ratifica N','Ratifica Data','Proposta ratifica','Proposta ratifica Data','Comunicazione CC Rif','Comunicazione CC Data','Verbale N','Verbale Data','Esito Parere','Soggetto PFF','Data PFF','Soggetto CdC','CdC Procura Data','CdC ConTe Data','Soggetto Prefettura','Prefettura Rif','Prefettura Data','Note'];
   const lines = [head.map(q).join(';')];
   rows.forEach(a => {
     const cat = CATEGORIE[a.cat] || CATEGORIE.altro;
@@ -2007,8 +2109,10 @@ function doExportCSV(){
     lines.push([
       enteShort(a.ente), a.anno, cat.label, a.oggetto, a.organo,
       a.schemaN, a.schemaData ? fmtDate(a.schemaData) : '',
-      a.delN, a.delData ? fmtDate(a.delData) : '',
+      a.delN, a.regGen, a.delData ? fmtDate(a.delData) : '',
+      a.proposta ? 'Sì' : '', a.propData ? fmtDate(a.propData) : '',
       a.ratN, a.ratData ? fmtDate(a.ratData) : '',
+      a.propRat ? 'Sì' : '', a.propRatData ? fmtDate(a.propRatData) : '',
       a.comN, a.comData ? fmtDate(a.comData) : (comPendente(a) ? 'DA COMUNICARE' : ''),
       a.verbN, a.verbData ? fmtDate(a.verbData) : '',
       esito ? esito.label : '',
@@ -2045,7 +2149,7 @@ function doTestoRelazione(){
     if(!a.delN){
       s = (a.organo === 'DET' ? 'determinazione' : 'deliberazione di ' + (a.organo === 'GC' ? 'Giunta Comunale' : 'Consiglio Comunale')) + ' in corso di approvazione, avente ad oggetto "' + a.oggetto + '"';
     } else if(a.organo === 'DET'){
-      s = 'determinazione del Responsabile del Servizio n. ' + a.delN + ' del ' + fmtDate(a.delData) + ', avente ad oggetto "' + a.oggetto + '"';
+      s = 'determinazione del Responsabile del Servizio n. ' + a.delN + (a.regGen ? ' (reg. gen. n. ' + a.regGen + ')' : '') + ' del ' + fmtDate(a.delData) + ', avente ad oggetto "' + a.oggetto + '"';
     } else {
       s = 'deliberazione di ' + (a.organo === 'GC' ? 'Giunta Comunale' : 'Consiglio Comunale') + ' n. ' + a.delN + ' del ' + fmtDate(a.delData) + ', avente ad oggetto "' + a.oggetto + '"';
     }
